@@ -19,6 +19,8 @@ All settings come from environment variables prefixed with `CAREERLINE_` (or fro
 | `CAREERLINE_ATTACHMENT_QUOTA_BYTES` | `250000000` | Total attachment storage per user. |
 | `CAREERLINE_STATIC_DIR` | *(unset)* | Folder with the built UI. When set, the API also serves the UI from the same origin. |
 | `CAREERLINE_PUBLIC_URL` | *(unset)* | Where CareerLine is reached from outside, e.g. `https://careerline.example.com`. Used for links in notifications and the default single sign-on redirect address. |
+| `CAREERLINE_TRUSTED_PROXIES` | `127.0.0.1` | *Docker Compose.* Reverse proxies whose `X-Forwarded-For` / `X-Forwarded-Proto` headers are believed: IPs or CIDR ranges, comma-separated (e.g. Traefik's network, `172.18.0.0/16`). Passed to uvicorn as `FORWARDED_ALLOW_IPS`. See [Exposing CareerLine beyond localhost](#exposing-careerline-beyond-localhost). |
+| `CAREERLINE_BIND` | `127.0.0.1` | *Docker Compose.* Host address the app's port is published on. A LAN address (or `0.0.0.0`) makes it reachable from other devices. Not needed when a proxy on the same Docker network reaches the app. |
 | `CAREERLINE_OUTBOUND_ALLOW_PRIVATE` | `false` | Let job sources, AI endpoints, ntfy, and webhooks reach private or LAN addresses for **every** user. The owner can always use private addresses for AI and notifications (a LAN Ollama or home-lab ntfy); everyone else is blocked unless this is on. |
 | `CAREERLINE_DEMO_MODE` | `false` | Fictional seed data on first start, registration closed, no outbound requests, AI providers and notifications off. Use `start.ps1 -Demo`, which also uses a separate database. |
 
@@ -116,4 +118,4 @@ Both the local runner and Compose bind to `127.0.0.1`. To expose CareerLine:
 
 1. Put a TLS-terminating reverse proxy in front (Caddy, Traefik, or nginx; Authelia works too).
 2. Set `CAREERLINE_COOKIE_SECURE=true`, `CAREERLINE_HSTS=true`, and `CAREERLINE_PUBLIC_URL`.
-3. Pass the proxy's address to uvicorn's `--forwarded-allow-ips` so rate limits and the audit log see real client IPs.
+3. Set `CAREERLINE_TRUSTED_PROXIES` to the proxy's address or its Docker network's range (for Traefik: `docker network inspect <network> -f '{{(index .IPAM.Config 0).Subnet}}'`, e.g. `172.18.0.0/16`). Without it, every visitor appears to come from the proxy's IP, so they all share one rate-limit bucket and the audit log and session list show the proxy instead of real clients. Trust only a network where nothing but the proxy can reach the app: anything inside it could claim any client IP. Outside Docker Compose, set uvicorn's `FORWARDED_ALLOW_IPS` (or `--forwarded-allow-ips`) instead.

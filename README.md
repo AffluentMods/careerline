@@ -80,7 +80,7 @@ cp .env.example .env      # then fill in POSTGRES_PASSWORD and CAREERLINE_ENCRYP
 docker compose up -d
 ```
 
-Open http://localhost:8080. Compose runs the app, the worker, and Postgres; backups go to the `backups` volume. The app is bound to `127.0.0.1`. To reach it from other devices, put a TLS reverse proxy (Caddy, Traefik, nginx) in front and set `CAREERLINE_COOKIE_SECURE=true`, `CAREERLINE_HSTS=true`, and `CAREERLINE_PUBLIC_URL`.
+Open http://localhost:8080. Compose runs the app, the worker, and Postgres; backups go to the `backups` volume. The app is bound to `127.0.0.1`. To reach it from other devices, put a TLS reverse proxy (Caddy, Traefik, nginx) in front and set `CAREERLINE_COOKIE_SECURE=true`, `CAREERLINE_HSTS=true`, `CAREERLINE_PUBLIC_URL`, and `CAREERLINE_TRUSTED_PROXIES` (the proxy's address or network range, so CareerLine sees real visitor IPs).
 
 ## Moving to another computer
 

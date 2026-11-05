@@ -6,6 +6,8 @@ x-app-env: &app-env
   env_file: .env
   environment:
     CAREERLINE_DATABASE_URL: postgresql://careerline:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/careerline
+    # Reverse proxies whose X-Forwarded-For / -Proto headers are believed (IPs or CIDR ranges).
+    FORWARDED_ALLOW_IPS: ${CAREERLINE_TRUSTED_PROXIES:-127.0.0.1}
 
 services:
   db:

@@ -33,10 +33,13 @@ ENV PATH=/app/.venv/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     CAREERLINE_STATIC_DIR=/app/static \
-    CAREERLINE_BACKUP_DIR=/backups
+    CAREERLINE_BACKUP_DIR=/backups \
+    # Which proxies uvicorn trusts for X-Forwarded-For/-Proto (IPs or CIDR ranges, comma-separated).
+    # Compose sets this from CAREERLINE_TRUSTED_PROXIES.
+    FORWARDED_ALLOW_IPS=127.0.0.1
 USER 10001
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
   CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/healthz', timeout=4)"]
-# --forwarded-allow-ips: set to your reverse proxy's address if you put one in front.
-CMD ["uvicorn", "careerline.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers", "--forwarded-allow-ips", "127.0.0.1"]
+# Trusted proxies come from FORWARDED_ALLOW_IPS (above), so no --forwarded-allow-ips flag here.
+CMD ["uvicorn", "careerline.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers"]
