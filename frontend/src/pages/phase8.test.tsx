@@ -193,7 +193,8 @@ describe("data page", () => {
       }
       if (url.endsWith("/data/export")) {
         if (!confirmed) return json({ error: { code: "reauth_required", message: "Confirm it's you first." } }, 403);
-        return new Response(new Blob(["zip"]), {
+        // A string body: Node 22's Response rejects jsdom's Blob (Node 24 accepts it).
+        return new Response("zip", {
           headers: { "content-disposition": 'attachment; filename="careerline-export-2026-11-04.zip"' },
         });
       }
