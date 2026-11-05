@@ -2,7 +2,7 @@
 
 A self-hosted, AI-assisted job search app. It helps you find jobs, decide which are worth it, prepare truthful application materials from your own verified facts, track every application, and prepare for interviews. Your data lives in your own database.
 
-> **Status: 1.0.0. All eight phases are complete.** Sign in (with two-factor or single sign-on), build your Career Vault, pull jobs from the sources you choose, score them, write fact-checked resumes and cover letters, track applications, practice interviews, ask the assistant, and see what's working. Try it with fictional data first: `.\start.ps1 -Demo`.
+> **Status: 1.1.0.** Sign in (with two-factor or single sign-on), build your Career Vault, pull jobs from the sources you choose, score them, write fact-checked resumes and cover letters, track applications, practice interviews, ask the assistant, and see what's working. Try it with fictional data first: `.\start.ps1 -Demo`.
 
 ## Principles
 

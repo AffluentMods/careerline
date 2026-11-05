@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-05 — CareerLine: AI agents over MCP, first public release
+
 ### Changed
 - **Renamed from Waypoint to CareerLine** (the old name collided with HashiCorp Waypoint). Everything that carried the name changed with it: the Python package (`careerline`), settings (`CAREERLINE_*` instead of `WAYPOINT_*`), cookies (`cl_session`, `cl_csrf`, `cl_oidc`), backup files (`careerline-*.clbackup`, new file signature and key-derivation label), export file names, the Docker image and Compose project, and the two-factor issuer shown in authenticator apps. No release had shipped under the old name; backups and `.env` files made before the rename need their `WAYPOINT_` settings renamed and can't be restored by this version.
 
