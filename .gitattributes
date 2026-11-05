@@ -1,0 +1,7 @@
+# Store and check out text files with LF everywhere (matches .editorconfig);
+# shell scripts and the Dockerfile must stay LF to run on Linux.
+* text=auto eol=lf
+
+*.docx binary
+*.png binary
+*.ico binary

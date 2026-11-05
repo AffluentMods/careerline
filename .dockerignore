@@ -1,0 +1,34 @@
+# Secrets and local data — never commit
+.env
+.env.*
+!.env.example
+.localdata/
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.git/
+.claude/
+docs/
+**/tests/
+frontend/e2e/

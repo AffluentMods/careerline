@@ -1,0 +1,26 @@
+# Docs site for Waypoint. Optional tooling, not a project dependency:
+#   uvx mkdocs serve     # preview at http://127.0.0.1:8000
+#   uvx mkdocs build     # static site in ./site
+site_name: Waypoint
+site_description: A self-hosted, AI-assisted job search app.
+docs_dir: docs
+site_dir: site
+theme:
+  name: readthedocs
+nav:
+  - Home: index.md
+  - User guide: guide.md
+  - Operations: operations.md
+  - Configuration: configuration.md
+  - Architecture: architecture.md
+  - Threat model: threat-model.md
+  - Build plans:
+      - Phase 1 - Foundation: plan/phase-1-foundation.md
+      - Phase 2 - Career Vault: plan/phase-2-career-vault.md
+      - Phase 3 - Tracker: plan/phase-3-tracker.md
+      - Phases 4-8 - Discovery to Polish: plan/phases-4-8.md
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true
+  - admonition

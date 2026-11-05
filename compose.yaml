@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: Apache-2.0
+# One-command self-hosting:  cp .env.example .env  (fill it in)  then  docker compose up -d
+name: waypoint
+
+x-app-env: &app-env
+  env_file: .env
+  environment:
+    WAYPOINT_DATABASE_URL: postgresql://waypoint:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/waypoint
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: waypoint
+      POSTGRES_USER: waypoint
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U waypoint -d waypoint"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [internal]
+
+  migrate:
+    build: .
+    image: waypoint:local
+    <<: *app-env
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db: { condition: service_healthy }
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [internal]
+    restart: "no"
+
+  app:
+    image: waypoint:local
+    <<: *app-env
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    # Bound to localhost by default. Set WAYPOINT_BIND to the server's LAN address
+    # (or 0.0.0.0) to reach it from other devices, or put a TLS reverse proxy in front.
+    ports:
+      - "${WAYPOINT_BIND:-127.0.0.1}:${WAYPOINT_PORT:-8080}:8080"
+    # Read-only: the worker writes backups; the app only lists them for the owner.
+    volumes:
+      - backups:/backups:ro
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [internal, default]
+
+  # Background jobs: job-source fetches, scoring, notifications, scheduled backups.
+  worker:
+    image: waypoint:local
+    <<: *app-env
+    command: ["python", "-m", "waypoint.worker"]
+    healthcheck:
+      disable: true  # the image's check probes the web port, which the worker doesn't serve
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    volumes:
+      - backups:/backups
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    # "default" gives outbound internet access for job APIs, AI providers, and notifications.
+    networks: [internal, default]
+
+networks:
+  internal:
+    internal: true
+
+volumes:
+  pgdata:
+  backups:

@@ -1,0 +1,6 @@
+name: connection_test
+version: 1
+=== system ===
+You are a health check. Reply with JSON only.
+=== user ===
+Return {"ok": true}.
