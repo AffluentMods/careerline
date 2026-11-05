@@ -27,7 +27,7 @@ export function AssistantPage() {
       <header className="page-head">
         <h1>Assistant</h1>
         <p className="muted">
-          Ask about your search. It reads your Waypoint data; anything that would change it waits for your OK, and it never
+          Ask about your search. It reads your CareerLine data; anything that would change it waits for your OK, and it never
           sends messages for you.
         </p>
       </header>

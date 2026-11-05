@@ -14,10 +14,10 @@ import pytest
 from fake_web import FakeWeb
 from pydantic import BaseModel, Field
 
-from waypoint.ai.facts import Fact, FactSet, fact_text
-from waypoint.ai.pricing import cost_micros
-from waypoint.ai.prompting import UNTRUSTED_RULES, load_prompt, redact, strict_schema, untrusted
-from waypoint.ai.providers import (
+from careerline.ai.facts import Fact, FactSet, fact_text
+from careerline.ai.pricing import cost_micros
+from careerline.ai.prompting import UNTRUSTED_RULES, load_prompt, redact, strict_schema, untrusted
+from careerline.ai.providers import (
     AiError,
     AiRefused,
     AnthropicProvider,
@@ -26,8 +26,8 @@ from waypoint.ai.providers import (
     ToolSpec,
     Turn,
 )
-from waypoint.ai.scoring import extract_requirements, score_with_rules
-from waypoint.discovery.models import JobPosting
+from careerline.ai.scoring import extract_requirements, score_with_rules
+from careerline.discovery.models import JobPosting
 
 # --- injection defense ---------------------------------------------------------------------
 
@@ -49,7 +49,7 @@ def test_untrusted_block_truncates_and_sanitizes_kind() -> None:
 def test_every_prompt_loads_renders_and_carries_the_rules() -> None:
     names = sorted(
         p.name[:-4]
-        for p in resources.files("waypoint.ai").joinpath("prompts").iterdir()
+        for p in resources.files("careerline.ai").joinpath("prompts").iterdir()
         if p.name.endswith(".txt")
     )
     assert names == [

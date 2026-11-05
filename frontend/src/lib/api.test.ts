@@ -6,19 +6,19 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("readCsrfToken", () => {
   it("reads the __Host- cookie", () => {
-    expect(readCsrfToken("a=1; __Host-wp_csrf=abc%3D; b=2")).toBe("abc=");
+    expect(readCsrfToken("a=1; __Host-cl_csrf=abc%3D; b=2")).toBe("abc=");
   });
   it("falls back to the plain cookie name", () => {
-    expect(readCsrfToken("wp_csrf=xyz")).toBe("xyz");
+    expect(readCsrfToken("cl_csrf=xyz")).toBe("xyz");
   });
   it("ignores look-alike names", () => {
-    expect(readCsrfToken("evil_wp_csrf=nope")).toBeUndefined();
+    expect(readCsrfToken("evil_cl_csrf=nope")).toBeUndefined();
   });
 });
 
 describe("api", () => {
   it("sends the CSRF header on POST but not GET", async () => {
-    document.cookie = "wp_csrf=token123";
+    document.cookie = "cl_csrf=token123";
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation(async () => new Response("{}", { status: 200 }));

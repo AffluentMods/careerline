@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-/** Export, import, re-authentication and backups. Mirrors backend/waypoint/data/routes.py. */
+/** Export, import, re-authentication and backups. Mirrors backend/careerline/data/routes.py. */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, apiDownload, apiUpload, saveBlob } from "./api";
 

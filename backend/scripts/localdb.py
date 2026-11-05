@@ -25,7 +25,7 @@ from pgserver.utils import PostmasterInfo
 
 REPO = Path(__file__).resolve().parents[2]
 DATA = REPO / ".localdata" / "pg"
-DB_NAME = "waypoint"
+DB_NAME = "careerline"
 
 
 RECOVERY_WAIT_SECONDS = 120

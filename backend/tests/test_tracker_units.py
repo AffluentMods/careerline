@@ -4,10 +4,10 @@ from __future__ import annotations
 import pytest
 from resume_fixtures import make_docx, make_pdf, make_zip
 
-from waypoint.security.crypto import CryptoError, FieldCipher, generate_key
-from waypoint.tracker.files import content_disposition, sniff_attachment
-from waypoint.tracker.schemas import ApplicationIn, OfferIn, annual_cents, hourly_cents
-from waypoint.vault.importer.guards import DOCX_MIME, RejectedFile
+from careerline.security.crypto import CryptoError, FieldCipher, generate_key
+from careerline.tracker.files import content_disposition, sniff_attachment
+from careerline.tracker.schemas import ApplicationIn, OfferIn, annual_cents, hourly_cents
+from careerline.vault.importer.guards import DOCX_MIME, RejectedFile
 
 
 def test_pay_maths() -> None:

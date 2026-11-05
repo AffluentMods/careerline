@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
-# Start Waypoint locally (Windows). First run installs dependencies.
+# Start CareerLine locally (Windows). First run installs dependencies.
 # Usage: .\start.ps1            -> http://localhost:8080
 #        .\start.ps1 -Dev       -> hot-reload dev servers
 #        .\start.ps1 -Rebuild   -> rebuild the frontend first
 #        .\start.ps1 -Demo      -> demo mode with fictional data (separate database)
 #        .\start.ps1 -VerifyBackup <file>  -> check that a backup opens
 #        .\start.ps1 -Restore <file>       -> restore a backup into an empty database (see docs/operations.md)
-#        .\start.ps1 -RotateKey          -> new encryption key, re-encrypt everything (Waypoint stopped)
+#        .\start.ps1 -RotateKey          -> new encryption key, re-encrypt everything (CareerLine stopped)
 #        .\start.ps1 -KeyStatus          -> which encryption keys are still in use
 param([switch]$Dev, [switch]$Rebuild, [switch]$Demo, [string]$Restore, [string]$VerifyBackup,
       [switch]$RotateKey, [switch]$Rekey, [switch]$KeyStatus)

@@ -4,8 +4,8 @@ from __future__ import annotations
 import pytest
 from resume_fixtures import CLASSIC_TEXT, PDF_LINES, make_docx, make_pdf, make_zip
 
-from waypoint.vault.importer.extract import extract_text_sync
-from waypoint.vault.importer.guards import (
+from careerline.vault.importer.extract import extract_text_sync
+from careerline.vault.importer.guards import (
     DOCX_MIME,
     PDF_MIME,
     RejectedFile,
@@ -13,8 +13,8 @@ from waypoint.vault.importer.guards import (
     clean_filename,
     sniff,
 )
-from waypoint.vault.importer.parse import PLACEHOLDER_TITLE, parse_resume
-from waypoint.vault.schemas import parse_data
+from careerline.vault.importer.parse import PLACEHOLDER_TITLE, parse_resume
+from careerline.vault.schemas import parse_data
 
 
 def _by_kind(text: str) -> dict[str, list[dict[str, object]]]:
@@ -206,11 +206,11 @@ def test_extract_timeout_kills_worker() -> None:
 
 
 def test_worker_gets_no_secrets(monkeypatch: pytest.MonkeyPatch) -> None:
-    from waypoint.vault.importer import extract
+    from careerline.vault.importer import extract
 
-    monkeypatch.setenv("WAYPOINT_ENCRYPTION_KEYS", "1:secret")
+    monkeypatch.setenv("CAREERLINE_ENCRYPTION_KEYS", "1:secret")
     env = extract._child_env()
-    assert not any(k.startswith("WAYPOINT") for k in env)
+    assert not any(k.startswith("CAREERLINE") for k in env)
 
 
 def test_parse_docx_end_to_end() -> None:

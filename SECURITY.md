@@ -19,7 +19,7 @@ Only the latest release receives security fixes.
 ## Scope
 
 In scope: this repository's code, default configuration, Docker image, and Compose file.
-Out of scope: vulnerabilities in third-party dependencies with no demonstrated impact on Waypoint (please report those upstream), and issues that need an already-compromised host.
+Out of scope: vulnerabilities in third-party dependencies with no demonstrated impact on CareerLine (please report those upstream), and issues that need an already-compromised host.
 
 ## Hardening already in place
 

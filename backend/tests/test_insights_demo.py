@@ -9,12 +9,12 @@ from datetime import date
 import httpx
 import pytest
 
-from waypoint import db
-from waypoint.config import Settings
-from waypoint.demo import DEMO_EMAIL, DEMO_PASSWORD, seed_demo
-from waypoint.insights.service import AppFacts, summarize
-from waypoint.net import FetchError, OfflineFetcher
-from waypoint.security.crypto import FieldCipher
+from careerline import db
+from careerline.config import Settings
+from careerline.demo import DEMO_EMAIL, DEMO_PASSWORD, seed_demo
+from careerline.insights.service import AppFacts, summarize
+from careerline.net import FetchError, OfflineFetcher
+from careerline.security.crypto import FieldCipher
 
 TODAY = date(2026, 11, 4)
 

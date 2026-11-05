@@ -79,7 +79,7 @@ it("offers single sign-on and explains a failed attempt", async () => {
   );
   const link = await screen.findByRole("link", { name: "Sign in with Authelia" });
   expect(link).toHaveAttribute("href", "/api/v1/auth/oidc/start?next=%2F");
-  expect(screen.getByRole("alert")).toHaveTextContent("No Waypoint account is linked");
+  expect(screen.getByRole("alert")).toHaveTextContent("No CareerLine account is linked");
   expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
 });
 

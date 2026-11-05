@@ -194,7 +194,7 @@ describe("data page", () => {
       if (url.endsWith("/data/export")) {
         if (!confirmed) return json({ error: { code: "reauth_required", message: "Confirm it's you first." } }, 403);
         return new Response(new Blob(["zip"]), {
-          headers: { "content-disposition": 'attachment; filename="waypoint-export-2026-11-04.zip"' },
+          headers: { "content-disposition": 'attachment; filename="careerline-export-2026-11-04.zip"' },
         });
       }
       return undefined;
@@ -235,7 +235,7 @@ describe("notifications page", () => {
     email_to: "",
     email_available: false,
     ntfy_enabled: true,
-    ntfy_url: "https://ntfy.sh/waypoint-xyz",
+    ntfy_url: "https://ntfy.sh/careerline-xyz",
     has_ntfy_token: true,
     webhook_enabled: false,
     webhook_kind: "discord",
@@ -253,7 +253,7 @@ describe("notifications page", () => {
       return undefined;
     });
     wrap(<NotificationsPage />);
-    expect(await screen.findByDisplayValue("https://ntfy.sh/waypoint-xyz")).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("https://ntfy.sh/careerline-xyz")).toBeInTheDocument();
     expect(screen.getByLabelText(/^Email/)).toBeDisabled(); // no SMTP on this server
     await userEvent.click(screen.getByRole("button", { name: "Save notification settings" }));
     const put = calls.find((c) => c.method === "PUT");

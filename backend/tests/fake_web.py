@@ -12,7 +12,7 @@ from typing import Any
 
 import httpx
 
-from waypoint.net import SafeFetcher
+from careerline.net import SafeFetcher
 
 PUBLIC_IP = "93.184.216.34"  # a public address; the mock transport never connects
 

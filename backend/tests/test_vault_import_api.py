@@ -9,10 +9,10 @@ import httpx
 from resume_fixtures import PDF_LINES, make_docx, make_pdf, make_zip
 from sqlalchemy import select
 
-from waypoint import db as dbmod
-from waypoint.config import Settings
-from waypoint.models import AuditLog, ResumeImport
-from waypoint.vault.importer.guards import DOCX_MIME, PDF_MIME
+from careerline import db as dbmod
+from careerline.config import Settings
+from careerline.models import AuditLog, ResumeImport
+from careerline.vault.importer.guards import DOCX_MIME, PDF_MIME
 
 IMPORTS = "/api/v1/vault/imports"
 V = "/api/v1/vault"

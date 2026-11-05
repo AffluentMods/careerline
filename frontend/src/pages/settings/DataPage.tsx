@@ -26,7 +26,7 @@ export function DataPage() {
         <h1>Settings</h1>
       </header>
       <SettingsNav />
-      <p className="muted">Take all your data with you, bring it to another Waypoint server, and keep backups.</p>
+      <p className="muted">Take all your data with you, bring it to another CareerLine server, and keep backups.</p>
       {me.data && status.data ? (
         <>
           <ExportCard user={me.data} status={status.data} />
@@ -203,8 +203,8 @@ function ImportCard({ user, status }: { user: User; status: AuthStatus }) {
 
   return (
     <Card
-      title="Import from a Waypoint export"
-      description="Moves data from another Waypoint server, or restores your own export. It goes into this account, which must be empty."
+      title="Import from a CareerLine export"
+      description="Moves data from another CareerLine server, or restores your own export. It goes into this account, which must be empty."
     >
       <div className="stack-sm">
         <label className="file-pick">
@@ -276,7 +276,7 @@ function BackupsCard() {
       {backups.isError ? <Notice>{errorMessage(backups.error)}</Notice> : null}
       {b && !b.enabled ? (
         <p className="small">
-          Backups are off. Set <code>WAYPOINT_BACKUP_DIR</code> to a folder (ideally on another disk) and restart.
+          Backups are off. Set <code>CAREERLINE_BACKUP_DIR</code> to a folder (ideally on another disk) and restart.
           Running with <code>start.ps1</code> turns them on automatically.
         </p>
       ) : null}
@@ -313,7 +313,7 @@ function BackupsCard() {
           </div>
           {now.error ? <Notice>{errorMessage(now.error)}</Notice> : null}
           <p className="muted small">
-            To restore, see &ldquo;Backups and restore&rdquo; in the docs (<code>python -m waypoint.data restore</code>).
+            To restore, see &ldquo;Backups and restore&rdquo; in the docs (<code>python -m careerline.data restore</code>).
           </p>
         </div>
       ) : null}

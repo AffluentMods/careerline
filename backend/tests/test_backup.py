@@ -16,16 +16,16 @@ from alembic.config import Config
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from careerline import db
+from careerline.config import Settings
+from careerline.data import backup
+from careerline.data.jobs import schedule_backup
+from careerline.discovery.models import QueuedJob
+from careerline.models import AuditLog, User
+from careerline.net import SafeFetcher
+from careerline.security.crypto import FieldCipher, generate_key
+from careerline.worker.runner import WorkerContext, drain
 from tests.conftest import BACKEND, TEST_PASSWORD
-from waypoint import db
-from waypoint.config import Settings
-from waypoint.data import backup
-from waypoint.data.jobs import schedule_backup
-from waypoint.discovery.models import QueuedJob
-from waypoint.models import AuditLog, User
-from waypoint.net import SafeFetcher
-from waypoint.security.crypto import FieldCipher, generate_key
-from waypoint.worker.runner import WorkerContext, drain
 
 KEY = os.urandom(32)
 
@@ -77,7 +77,7 @@ def test_detects_tampering_truncation_and_wrong_key(monkeypatch: pytest.MonkeyPa
         _decrypt(blob + blob[head : head + chunk])  # an extra chunk appended
     with pytest.raises(backup.BackupError, match="damaged, or the key"):
         _decrypt(blob, os.urandom(32))
-    with pytest.raises(backup.BackupError, match="isn't a Waypoint backup"):
+    with pytest.raises(backup.BackupError, match="isn't a CareerLine backup"):
         _decrypt(b"PK\x03\x04" + blob)
     # Swapping two chunks breaks it too.
     first, second = blob[head : head + chunk], blob[head + chunk : head + 2 * chunk]
@@ -144,15 +144,15 @@ async def test_schedule_write_prune_and_restore(
 
     # Retention keeps the newest two.
     for stamp in ("20200101-000000", "20200102-000000"):
-        (tmp_path / f"waypoint-{stamp}.wpbackup").write_bytes(b"old")
+        (tmp_path / f"careerline-{stamp}.clbackup").write_bytes(b"old")
     backup.prune(tmp_path, 2)
     assert [f.name for f in backup.list_backups(tmp_path)] == [
         files[0].name,
-        "waypoint-20200102-000000.wpbackup",
+        "careerline-20200102-000000.clbackup",
     ]
 
     # Restore into a brand-new database migrated to the same version.
-    target = migrated.rsplit("/", 1)[0] + "/waypoint_restore_test"
+    target = migrated.rsplit("/", 1)[0] + "/careerline_restore_test"
     admin = create_async_engine(
         Settings(
             _env_file=None, database_url=migrated, encryption_keys="1:" + generate_key()
@@ -160,8 +160,8 @@ async def test_schedule_write_prune_and_restore(
         isolation_level="AUTOCOMMIT",
     )
     async with admin.connect() as conn:
-        await conn.execute(text("DROP DATABASE IF EXISTS waypoint_restore_test WITH (FORCE)"))
-        await conn.execute(text("CREATE DATABASE waypoint_restore_test"))
+        await conn.execute(text("DROP DATABASE IF EXISTS careerline_restore_test WITH (FORCE)"))
+        await conn.execute(text("CREATE DATABASE careerline_restore_test"))
     try:
         cfg = Config(str(BACKEND / "alembic.ini"))
         cfg.attributes["database_url"] = target
@@ -189,7 +189,7 @@ async def test_schedule_write_prune_and_restore(
 
         # The restored server works: sign in with the same password.
         app_settings = make_settings(database_url=target)
-        from waypoint.main import create_app
+        from careerline.main import create_app
 
         await db.dispose_engine()
         db.init_engine(app_settings.async_database_url)
@@ -211,7 +211,7 @@ async def test_schedule_write_prune_and_restore(
         db.init_engine(make_settings().async_database_url)
     finally:
         async with admin.connect() as conn:
-            await conn.execute(text("DROP DATABASE IF EXISTS waypoint_restore_test WITH (FORCE)"))
+            await conn.execute(text("DROP DATABASE IF EXISTS careerline_restore_test WITH (FORCE)"))
         await admin.dispose()
 
 
@@ -224,7 +224,7 @@ async def test_restore_refuses_other_versions(
         await s.execute(text("UPDATE alembic_version SET version_num = '0001'"))
         await s.commit()
     try:
-        with pytest.raises(backup.BackupError, match="same Waypoint version"):
+        with pytest.raises(backup.BackupError, match="same CareerLine version"):
             await backup.restore_backup(db.get_sessionmaker(), settings, tmp_path / made.name)
     finally:
         async with db.get_sessionmaker()() as s:
@@ -290,19 +290,19 @@ def test_every_table_is_backed_up_from_a_fresh_process() -> None:
     import sys
 
     code = (
-        "from waypoint.data import backup, portable; "
+        "from careerline.data import backup, portable; "
         "print(','.join(sorted(t.name for t in backup.backup_tables()))); "
         "print(','.join(sorted(t.name for t in portable.export_tables())))"
     )
     out = subprocess.run(  # noqa: S603 - our own interpreter and a fixed script
         [sys.executable, "-c", code], capture_output=True, text=True, check=True, cwd=BACKEND
     ).stdout.split()
-    from waypoint import model_registry  # noqa: F401
-    from waypoint.db import Base
+    from careerline import model_registry  # noqa: F401
+    from careerline.db import Base
 
     expected = {t.name for t in Base.metadata.sorted_tables} - backup.EXCLUDED
     assert set(out[0].split(",")) == expected
     assert {"applications", "job_postings", "documents", "notification_settings"} <= expected
-    from waypoint.data import portable
+    from careerline.data import portable
 
     assert set(out[1].split(",")) == set(portable.EXPORT_TABLES)

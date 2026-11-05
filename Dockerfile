@@ -18,12 +18,12 @@ COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY backend/alembic.ini ./
 COPY backend/alembic ./alembic
-COPY backend/waypoint ./waypoint
+COPY backend/careerline ./careerline
 RUN uv sync --frozen --no-dev --no-editable
 
 # ---- 3. Runtime ------------------------------------------------------------------
 FROM python:3.12-slim
-RUN useradd --system --uid 10001 --no-create-home --home-dir /app waypoint \
+RUN useradd --system --uid 10001 --no-create-home --home-dir /app careerline \
  && mkdir -p /backups \
  && chown 10001:10001 /backups
 WORKDIR /app
@@ -32,11 +32,11 @@ COPY --from=web /web/dist /app/static
 ENV PATH=/app/.venv/bin:$PATH \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    WAYPOINT_STATIC_DIR=/app/static \
-    WAYPOINT_BACKUP_DIR=/backups
+    CAREERLINE_STATIC_DIR=/app/static \
+    CAREERLINE_BACKUP_DIR=/backups
 USER 10001
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
   CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/healthz', timeout=4)"]
 # --forwarded-allow-ips: set to your reverse proxy's address if you put one in front.
-CMD ["uvicorn", "waypoint.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers", "--forwarded-allow-ips", "127.0.0.1"]
+CMD ["uvicorn", "careerline.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers", "--forwarded-allow-ips", "127.0.0.1"]

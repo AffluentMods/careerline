@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, apiUpload } from "./api";
 
-// --- types (mirror backend/waypoint/tracker/schemas.py) ----------------------------------
+// --- types (mirror backend/careerline/tracker/schemas.py) ----------------------------------
 
 export const STAGES = [
   "saved",

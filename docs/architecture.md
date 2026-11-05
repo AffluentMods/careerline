@@ -7,7 +7,7 @@ flowchart LR
   B[Browser<br/>React SPA] -- "same origin<br/>cookies + CSRF header" --> A
   subgraph Server["Your server (127.0.0.1 by default)"]
     A[FastAPI app<br/>API + static UI] --> P[(PostgreSQL 16<br/>data + job queue)]
-    W[Worker<br/>python -m waypoint.worker] --> P
+    W[Worker<br/>python -m careerline.worker] --> P
     W --> K[(Encrypted backups)]
   end
   A -. "SafeFetcher<br/>(configured only)" .-> J[Job APIs, feeds,<br/>linked pages]
@@ -21,7 +21,7 @@ flowchart LR
 
 Two processes share one database: the **app** (API + UI) and the **worker** (scheduled job-source fetches, scoring, notifications, backups, daily maintenance). One process serves both the API (`/api/...`) and the built UI. Keeping a single origin lets the Content-Security-Policy stay strict (`default-src 'self'`, no inline script) and keeps CSRF handling simple. For remote access, put a TLS reverse proxy in front.
 
-## Backend (`backend/waypoint`)
+## Backend (`backend/careerline`)
 
 | Module | Role |
 |---|---|
@@ -44,17 +44,17 @@ Two processes share one database: the **app** (API + UI) and the **worker** (sch
 | `tracker/service.py` | Per-user lookups, output builders, the agenda merge, and board summaries. |
 | `net.py` | `SafeFetcher`: the only outbound HTTP client for user-configured addresses (SSRF guard, pinned DNS, manual redirects, size cap), `robots_allows`, and the demo-mode `OfflineFetcher`. |
 | `discovery/` | Job sources (`adapters.py`: Greenhouse, Lever, Ashby, Adzuna, USAJOBS, JSearch, RSS/Atom), normalization (`normalize.py`: pay, work mode, shifts, clearance, fingerprints), filters and storage (`service.py`), link and text import (`page_import.py`), and the `/api/v1/discovery` routes. |
-| `worker/` | Postgres job queue (`queue.py`: `FOR UPDATE SKIP LOCKED`, dedupe keys, backoff), the runner and scheduler (`runner.py`), and `python -m waypoint.worker`. Other modules register handlers and schedule hooks. |
+| `worker/` | Postgres job queue (`queue.py`: `FOR UPDATE SKIP LOCKED`, dedupe keys, backoff), the runner and scheduler (`runner.py`), and `python -m careerline.worker`. Other modules register handlers and schedule hooks. |
 | `ai/` | Providers (Claude via the official SDK, OpenAI-compatible, Ollama) behind one interface; prompt templates (`prompts/*.txt`, versioned); untrusted-data wrapping, PII redaction, strict JSON schemas (`prompting.py`); facts from the vault (`facts.py`); budgets, rate limits, and run logging (`service.py`); rule and AI fit scoring (`scoring.py`); `/api/v1/ai`. |
 | `materials/` | Resume and cover-letter building with per-line fact citations and the fact check (`build.py`), DOCX/PDF export (`export.py`), `/api/v1/materials`. |
 | `assistant/` | Conversations with tool use (`chat.py`, `tools.py`), pending actions, interview questions and mock interviews (`interview.py`), `/api/v1/assistant` and `/api/v1/interview`. |
 | `insights/` | Funnel, response rates, and response times from stage history (`service.py`), `/api/v1/insights`. |
 | `notify/` | Notification settings and log, digest and match-alert builders, channel senders (SMTP, ntfy, Discord, Slack, JSON), worker hooks, `/api/v1/notifications`. |
-| `data/` | Value codec, per-user export/import (`portable.py`), encrypted whole-database backups and restore (`backup.py`), the backup job, `/api/v1/data`, and `python -m waypoint.data`. |
+| `data/` | Value codec, per-user export/import (`portable.py`), encrypted whole-database backups and restore (`backup.py`), the backup job, `/api/v1/data`, and `python -m careerline.data`. |
 | `auth/oidc.py` | OpenID Connect sign-in, account linking, and re-authentication, `/api/v1/auth/oidc`. |
 | `demo.py` | The fictional demo account and its seed data. |
 | `security/contexts.py` | Every encryption context (the associated data binding a value to its row and column), shared by the app, export/import, and re-encryption. |
-| `data/rekey.py` | Re-encrypts every encrypted column with the active key (`python -m waypoint.data rekey`, `keys`). |
+| `data/rekey.py` | Re-encrypts every encrypted column with the active key (`python -m careerline.data rekey`, `keys`). |
 | `model_registry.py` | Imports every table module, so tools that walk the metadata (backups, export) see every table. |
 | `audit.py` | Writes audit entries. |
 | `errors.py` | A single error shape: `{"error": {"code", "message"}}`. |
@@ -113,7 +113,7 @@ sequenceDiagram
   U->>A: edit / approve / discard drafts, then delete the import
 ```
 
-The worker runs with `python -I` and an environment that contains no `WAYPOINT_*` variables, so a parser exploit can't read the database URL or encryption keys from its environment. On Linux it also has a 512 MB address-space limit.
+The worker runs with `python -I` and an environment that contains no `CAREERLINE_*` variables, so a parser exploit can't read the database URL or encryption keys from its environment. On Linux it also has a 512 MB address-space limit.
 
 ## Tracker data model
 
@@ -210,7 +210,7 @@ React 19 + TypeScript + Vite. TanStack Query holds server state, and React Route
 | Job queue in Postgres, not Redis/Celery | One database to run and back up; `SKIP LOCKED` is enough for a personal server. |
 | One outbound client for every user-supplied address | SSRF rules live in one place and are tested once: feeds, link import, AI endpoints, and notifications all go through it. |
 | Official Anthropic SDK for Claude | Typed requests, retries, and structured output; other providers use plain HTTP through the same interface. |
-| Rule-based scoring and materials always available | Waypoint is useful with no AI and no cost; AI adds quality, not capability. |
+| Rule-based scoring and materials always available | CareerLine is useful with no AI and no cost; AI adds quality, not capability. |
 | Fact-check on every generated line | "Truthful by design" is enforced by code and by blocking export, not by asking the model nicely. |
 | Assistant writes only through pending actions | The model can't change data, whatever a posting or page tells it. |
 | Charts in SVG/CSS | No chart dependency; small, accessible, and themed with the app's tokens. |

@@ -236,7 +236,7 @@ function ImportForm({ onDone }: { onDone: () => void }) {
           type="url"
           required
           value={url}
-          hint="Waypoint reads the page once, if the site allows it. Some sites (LinkedIn, Indeed) don't, so paste the text instead."
+          hint="CareerLine reads the page once, if the site allows it. Some sites (LinkedIn, Indeed) don't, so paste the text instead."
           onChange={(e) => setUrl(e.target.value)}
         />
       ) : (

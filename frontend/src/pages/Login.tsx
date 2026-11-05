@@ -64,7 +64,7 @@ export function LoginPage() {
         {ssoError ? <Notice>{ssoError}</Notice> : null}
         {s?.demo ? (
           <Notice tone="info">
-            Demo account: <strong>demo@example.com</strong> with password <strong>explore-waypoint</strong>
+            Demo account: <strong>demo@example.com</strong> with password <strong>explore-careerline</strong>
           </Notice>
         ) : null}
         {s ? <SsoButton status={s} /> : null}

@@ -1,6 +1,6 @@
 # User guide
 
-A tour of Waypoint in the order you'd normally use it. Everything here works without an AI provider except where it says **(AI)**.
+A tour of CareerLine in the order you'd normally use it. Everything here works without an AI provider except where it says **(AI)**.
 
 ## 1. Build your Career Vault
 
@@ -8,7 +8,7 @@ Open **Career Vault**. Add your roles, then the responsibilities and achievement
 
 Only **verified** facts are ever used to score jobs or write materials. Facts you type are verified when you save them; imported facts start as drafts. A fact under a draft role isn't usable until the role is verified too. The sidebar shows how many drafts are waiting.
 
-**Import a resume** (PDF or Word, up to 5 MB) to get started faster. Waypoint creates drafts only; review them next to the extracted text and approve what's right.
+**Import a resume** (PDF or Word, up to 5 MB) to get started faster. CareerLine creates drafts only; review them next to the extracted text and approve what's right.
 
 **Stories:** write STAR stories (situation, task, action, result) and link each to the facts it's based on. Interview prep matches questions to these.
 
@@ -24,7 +24,7 @@ Open **Jobs** → **Sources** and add where to look:
 | JSearch | A RapidAPI key. |
 | RSS or Atom feed | The feed address. |
 
-Each source shows its terms of use. Waypoint fetches on the schedule you set (every 12 hours by default), merges the same job seen on several sources, and never fetches LinkedIn, Indeed, Glassdoor, ZipRecruiter, Monster, SimplyHired, Dice, or CareerBuilder.
+Each source shows its terms of use. CareerLine fetches on the schedule you set (every 12 hours by default), merges the same job seen on several sources, and never fetches LinkedIn, Indeed, Glassdoor, ZipRecruiter, Monster, SimplyHired, Dice, or CareerBuilder.
 
 **Filters** (Jobs → Filters) decide what's a match: places and a radius, remote/hybrid/on-site, minimum and target pay (hourly; yearly pay is divided by 2,080), shifts, clearance, words to require or exclude, and companies to prefer or hide. Postings that fail a filter go to **Filtered** with the reason; nothing is deleted.
 

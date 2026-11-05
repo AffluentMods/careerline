@@ -4,12 +4,15 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+- **Renamed from Waypoint to CareerLine** (the old name collided with HashiCorp Waypoint). Everything that carried the name changed with it: the Python package (`careerline`), settings (`CAREERLINE_*` instead of `WAYPOINT_*`), cookies (`cl_session`, `cl_csrf`, `cl_oidc`), backup files (`careerline-*.clbackup`, new file signature and key-derivation label), export file names, the Docker image and Compose project, and the two-factor issuer shown in authenticator apps. No release had shipped under the old name; backups and `.env` files made before the rename need their `WAYPOINT_` settings renamed and can't be restored by this version.
+
 ### Security
 - The outbound-request guard now judges NAT64 addresses (`64:ff9b::/96`) by the IPv4 address they embed and refuses deprecated IPv4-compatible addresses (`::/96`), so a host resolving to, for example, `64:ff9b::a9fe:a9fe` can't reach `169.254.169.254` through a NAT64 gateway.
 
 ### Added
 - GitHub Actions CI: backend lint, types, tests (against Postgres 16), and pip-audit; frontend lint, types, tests, build, license check, and runtime npm audit; Playwright end-to-end tests; and a Docker image build.
-- `WAYPOINT_BIND` (Docker Compose): the host address the app's port is published on. Defaults to `127.0.0.1`; set a LAN address to reach Waypoint from other devices without a reverse proxy.
+- `CAREERLINE_BIND` (Docker Compose): the host address the app's port is published on. Defaults to `127.0.0.1`; set a LAN address to reach CareerLine from other devices without a reverse proxy.
 
 ### Fixed
 - Confirming an assistant proposal locks it first, so two confirms at once (two tabs, a retry) apply it only once.
@@ -18,11 +21,11 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added — Phase 4: Discovery
 - Job sources: Greenhouse, Lever, and Ashby boards; Adzuna; USAJOBS; JSearch; RSS and Atom feeds. Each shows its terms of use. Keys are encrypted per source.
-- A background worker (`python -m waypoint.worker`, started by the local runner and Compose) with a Postgres job queue: scheduled fetches, retries with backoff, de-duplicated jobs, and daily maintenance.
+- A background worker (`python -m careerline.worker`, started by the local runner and Compose) with a Postgres job queue: scheduled fetches, retries with backoff, de-duplicated jobs, and daily maintenance.
 - Normalization of pay (hourly and yearly), work mode, shifts, clearance, and dates; cross-source de-duplication by fingerprint, with every sighting kept.
 - Filters: places and radius, work mode, minimum and target pay, shifts, clearance, required and excluded words, preferred and blocked companies. Matches / Filtered / Saved / Dismissed views with the reason for each.
 - Add one job by link (robots.txt respected, LinkedIn, Indeed, and similar sites never fetched) or by pasting its text. Track a posting straight into the tracker.
-- `SafeFetcher`: one outbound client that blocks private addresses, pins DNS, re-checks redirects, and caps response size. `WAYPOINT_OUTBOUND_ALLOW_PRIVATE`.
+- `SafeFetcher`: one outbound client that blocks private addresses, pins DNS, re-checks redirects, and caps response size. `CAREERLINE_OUTBOUND_ALLOW_PRIVATE`.
 
 ### Added — Phase 5: AI
 - Providers: Claude (official SDK), any OpenAI-compatible API, and Ollama, configured per user in Settings → AI, with a connection test.
@@ -43,12 +46,12 @@ All notable changes to this project are documented here. The format follows [Kee
 - Insights: response rate by source, stage funnel with conversion, time to first response, applications per week, and quiet applications, with table views.
 - Notifications: a daily digest and new-match alerts by email (instance SMTP), ntfy, or Discord/Slack/JSON webhooks; encrypted addresses; test sends; a delivery log.
 - Full export (JSON + files) and import into an empty account; password re-confirmation (`/auth/reauth`) for both.
-- Scheduled encrypted backups of the whole database with retention, "Back up now" for the owner, and `--verify-backup` / `--restore` options on the start scripts (`python -m waypoint.data` underneath).
-- Single sign-on with OpenID Connect (Authelia, Authentik, Keycloak, …): PKCE, state, nonce, JWKS-verified ID tokens, account linking, optional auto-create and link-by-verified-email, and an SSO-only mode (`WAYPOINT_PASSWORD_LOGIN=false`). SSO-only accounts can set a password later.
+- Scheduled encrypted backups of the whole database with retention, "Back up now" for the owner, and `--verify-backup` / `--restore` options on the start scripts (`python -m careerline.data` underneath).
+- Single sign-on with OpenID Connect (Authelia, Authentik, Keycloak, …): PKCE, state, nonce, JWKS-verified ID tokens, account linking, optional auto-create and link-by-verified-email, and an SSO-only mode (`CAREERLINE_PASSWORD_LOGIN=false`). SSO-only accounts can set a password later.
 - Demo mode (`start.ps1 -Demo`): a fictional job seeker in a separate database, with registration closed and no outbound requests.
-- Encryption key rotation: `start.ps1 -RotateKey` adds a new key and re-encrypts every encrypted value with it; `-KeyStatus` shows which keys are still in use (`python -m waypoint.data rekey` / `keys` underneath). Old keys can then be retired.
+- Encryption key rotation: `start.ps1 -RotateKey` adds a new key and re-encrypts every encrypted value with it; `-KeyStatus` shows which keys are still in use (`python -m careerline.data rekey` / `keys` underneath). Old keys can then be retired.
 - Docs: user guide, operations guide (backups, restore, single sign-on with Authelia, notifications, demo, upgrades), and an MkDocs site config.
-- Settings: `WAYPOINT_PUBLIC_URL`, `WAYPOINT_SMTP_*`, `WAYPOINT_IMPORT_ARCHIVE_MAX_BYTES`, `WAYPOINT_BACKUP_*`, `WAYPOINT_OIDC_*`, `WAYPOINT_PASSWORD_LOGIN`, `WAYPOINT_DEMO_MODE`.
+- Settings: `CAREERLINE_PUBLIC_URL`, `CAREERLINE_SMTP_*`, `CAREERLINE_IMPORT_ARCHIVE_MAX_BYTES`, `CAREERLINE_BACKUP_*`, `CAREERLINE_OIDC_*`, `CAREERLINE_PASSWORD_LOGIN`, `CAREERLINE_DEMO_MODE`.
 - Audit events: `discovery.source_created`, `discovery.source_deleted`, `ai.settings_updated`, `document.generated`, `document.exported`, `assistant.action_confirmed`, `auth.reauth`, `auth.reauth_failed`, `auth.sso_linked`, `auth.sso_unlinked`, `auth.sso_failed`, `data.exported`, `data.imported`, `data.backup_requested`, `notifications.updated`, `security.rekey`. Sign-ins through single sign-on are `auth.login` / `auth.register` with `method: oidc`.
 - Tests: 318 backend, 66 frontend unit, 5 Playwright end-to-end (one covering add job → score → interview prep → resume → track → insights → export → notifications).
 
@@ -56,7 +59,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - `users.password_hash` may be empty (single-sign-on-only accounts); sessions record how they were created and when the user last re-authenticated.
 - The first account can be created through single sign-on.
 - Compose mounts the backups volume read-only into the app so the owner can see backups.
-- Every encryption context now comes from one module (`waypoint/security/contexts.py`); the stored values are unchanged.
+- Every encryption context now comes from one module (`careerline/security/contexts.py`); the stored values are unchanged.
 
 ### Security
 - Every imported archive is validated like API input (types, vault schemas, http(s)-only links), gets fresh IDs, never carries pending assistant actions, and is size-limited before parsing.
@@ -76,7 +79,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Offer comparison: yearly and hourly equivalents, bonus, equity, PTO, schedule, commute, and growth path. The best value in each row is highlighted, and offers are compared only within one currency.
 - Overview: "Due soon" and "Pipeline" cards. Sidebar count of items due today or overdue.
 - Audit events: `tracker.application_deleted`, `tracker.attachment_uploaded`, `tracker.attachment_deleted`, `tracker.contact_deleted`.
-- Settings: `WAYPOINT_ATTACHMENT_MAX_BYTES` and `WAYPOINT_ATTACHMENT_QUOTA_BYTES`.
+- Settings: `CAREERLINE_ATTACHMENT_MAX_BYTES` and `CAREERLINE_ATTACHMENT_QUOTA_BYTES`.
 - Tests: 150 backend, 45 frontend unit, 4 Playwright end-to-end.
 
 ### Changed
@@ -94,7 +97,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - STAR story bank with tags, linked to vault entries.
 - Cross-user isolation enforced by composite foreign keys in the database, as well as in queries.
 - Audit events: `vault.import`, `vault.import_deleted`, `vault.verify`, `vault.profile_updated`.
-- Per-route request size limit: `WAYPOINT_IMPORT_MAX_BYTES` (5 MB) for uploads, 1 MB elsewhere.
+- Per-route request size limit: `CAREERLINE_IMPORT_MAX_BYTES` (5 MB) for uploads, 1 MB elsewhere.
 - Tests: 117 backend (unit + API, including isolation on every vault route and hostile-file cases), 28 frontend unit, and 3 Playwright end-to-end.
 
 ### Changed

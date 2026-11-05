@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, apiUpload } from "./api";
 
-// --- types (mirror backend/waypoint/vault/schemas.py) ----------------------------------
+// --- types (mirror backend/careerline/vault/schemas.py) ----------------------------------
 
 export type Kind =
   | "role"

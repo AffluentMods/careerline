@@ -13,13 +13,13 @@ from conftest import TEST_KEY
 from fake_web import FakeWeb
 from sqlalchemy import select, update
 
-from waypoint import db as dbmod
-from waypoint.ai import service as ai_service
-from waypoint.ai.models import AiRun, AiSettings, JobScore
-from waypoint.ai.providers import AiError, FakeProvider, fake_text
-from waypoint.config import Settings
-from waypoint.security.crypto import FieldCipher
-from waypoint.worker.runner import WorkerContext, drain
+from careerline import db as dbmod
+from careerline.ai import service as ai_service
+from careerline.ai.models import AiRun, AiSettings, JobScore
+from careerline.ai.providers import AiError, FakeProvider, fake_text
+from careerline.config import Settings
+from careerline.security.crypto import FieldCipher
+from careerline.worker.runner import WorkerContext, drain
 
 A = "/api/v1/ai"
 D = "/api/v1/discovery"
@@ -183,7 +183,7 @@ async def test_rule_scores_by_default(user_client: httpx.AsyncClient, settings: 
     await c.post(f"{V}/entries", json={"kind": "skill", "data": {"name": "Splunk"}})
     assert (await c.get(f"{D}/postings/{eng['id']}")).json()["score"]["stale"] is True
     async for db in dbmod.get_db():
-        from waypoint.discovery.models import QueuedJob
+        from careerline.discovery.models import QueuedJob
 
         await db.execute(
             update(QueuedJob)

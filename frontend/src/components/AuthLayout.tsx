@@ -12,7 +12,7 @@ export function AuthLayout({ title, subtitle, children, footer }: {
     <div className="auth-page">
       <main className="auth-card">
         <div className="brand brand-lg">
-          <Logo /> <span>Waypoint</span>
+          <Logo /> <span>CareerLine</span>
         </div>
         <h1>{title}</h1>
         {subtitle ? <p className="muted">{subtitle}</p> : null}

@@ -15,12 +15,12 @@ import httpx
 import pytest
 from sqlalchemy import select, update
 
+from careerline import db
+from careerline.config import Settings
+from careerline.models import AuthSession, VaultProfile
+from careerline.tracker.models import Contact
 from tests.conftest import TEST_PASSWORD
 from tests.resume_fixtures import make_pdf
-from waypoint import db
-from waypoint.config import Settings
-from waypoint.models import AuthSession, VaultProfile
-from waypoint.tracker.models import Contact
 
 V = "/api/v1/vault"
 T = "/api/v1/tracker"
@@ -98,7 +98,7 @@ async def test_export_contents(user_client: httpx.AsyncClient) -> None:
     seeded = await _seed(user_client)
     zf = await _export(user_client)
     manifest = json.loads(zf.read("manifest.json"))
-    assert manifest["format"] == "waypoint-export"
+    assert manifest["format"] == "careerline-export"
     assert manifest["user"]["email"] == "jordan@example.com"
     # Encrypted fields come out readable; secrets don't come out at all.
     contacts = _table(zf, "contacts")
@@ -207,7 +207,7 @@ def _archive(tables: dict[str, list[dict[str, Any]]], **manifest: Any) -> bytes:
             "manifest.json",
             json.dumps(
                 {
-                    "format": "waypoint-export",
+                    "format": "careerline-export",
                     "version": 1,
                     "user_id": str(uuid.uuid4()),
                     **manifest,
@@ -223,8 +223,8 @@ def _archive(tables: dict[str, list[dict[str, Any]]], **manifest: Any) -> bytes:
 @pytest.mark.parametrize(
     ("body", "message"),
     [
-        (b"not a zip", "isn't a Waypoint export"),
-        (_archive({}, format="something-else"), "isn't a Waypoint export"),
+        (b"not a zip", "isn't a CareerLine export"),
+        (_archive({}, format="something-else"), "isn't a CareerLine export"),
         (_archive({}, version=99), "newer version"),
         (_archive({"users": []}), "unknown table"),
         (
@@ -404,7 +404,7 @@ async def test_import_never_carries_pending_actions(
 async def test_import_rejects_oversized_unpacked_archives(
     user_client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from waypoint.data import portable
+    from careerline.data import portable
 
     monkeypatch.setattr(portable, "MAX_TOTAL_BYTES", 100)
     r = await user_client.post("/api/v1/data/import", content=_archive({"applications": []}))

@@ -24,7 +24,7 @@ export default defineConfig({
     url: `http://localhost:${PORT}/api/healthz`,
     reuseExistingServer: false,
     // Lets vault.spec register a second (fictional) user after the owner exists.
-    env: { WAYPOINT_ALLOW_REGISTRATION: "true" },
+    env: { CAREERLINE_ALLOW_REGISTRATION: "true" },
     timeout: 180_000,
   },
 });

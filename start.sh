@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # SPDX-License-Identifier: Apache-2.0
-# Start Waypoint locally (macOS/Linux).
+# Start CareerLine locally (macOS/Linux).
 # Usage: ./start.sh [--dev] [--rebuild] [--demo] [--restore FILE] [--verify-backup FILE]
 #                   [--rotate-key] [--rekey] [--key-status]
 set -eu

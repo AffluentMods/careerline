@@ -1,7 +1,7 @@
-# Docs site for Waypoint. Optional tooling, not a project dependency:
+# Docs site for CareerLine. Optional tooling, not a project dependency:
 #   uvx mkdocs serve     # preview at http://127.0.0.1:8000
 #   uvx mkdocs build     # static site in ./site
-site_name: Waypoint
+site_name: CareerLine
 site_description: A self-hosted, AI-assisted job search app.
 docs_dir: docs
 site_dir: site

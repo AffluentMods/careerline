@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Test fixtures.
 
-Tests run against a real PostgreSQL. Set WAYPOINT_TEST_DATABASE_URL to use an
+Tests run against a real PostgreSQL. Set CAREERLINE_TEST_DATABASE_URL to use an
 existing server (CI does this). Otherwise a private server is started with
 pgserver in ``.localdata/pg-test``.
 """
@@ -19,10 +19,10 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import text
 
-from waypoint import db
-from waypoint.config import Settings
-from waypoint.main import create_app
-from waypoint.security.crypto import generate_key
+from careerline import db
+from careerline.config import Settings
+from careerline.main import create_app
+from careerline.security.crypto import generate_key
 
 BACKEND = Path(__file__).resolve().parents[1]
 TEST_KEY = generate_key()
@@ -30,7 +30,7 @@ TEST_KEY = generate_key()
 
 @pytest.fixture(scope="session")
 def database_url() -> Iterator[str]:
-    url = os.environ.get("WAYPOINT_TEST_DATABASE_URL")
+    url = os.environ.get("CAREERLINE_TEST_DATABASE_URL")
     if url:
         yield url
         return
@@ -39,9 +39,9 @@ def database_url() -> Iterator[str]:
 
     data = BACKEND.parent / ".localdata" / "pg-test"
     srv = localdb._server(data)
-    srv.psql("DROP DATABASE IF EXISTS waypoint_test WITH (FORCE);")
-    localdb.ensure_database(srv, "waypoint_test")
-    yield localdb.tcp_url(srv, "waypoint_test")
+    srv.psql("DROP DATABASE IF EXISTS careerline_test WITH (FORCE);")
+    localdb.ensure_database(srv, "careerline_test")
+    yield localdb.tcp_url(srv, "careerline_test")
 
 
 @pytest.fixture(scope="session")

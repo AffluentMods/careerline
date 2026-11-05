@@ -9,7 +9,7 @@ const PASSWORD = "e2e search battery staple";
 /** Call the API as the signed-in browser (same cookies, CSRF header from the cookie). */
 async function apiPost(page: Page, path: string, data: unknown): Promise<{ id: string }> {
   const cookies = await page.context().cookies();
-  const csrf = cookies.find((c) => c.name.endsWith("wp_csrf"))?.value ?? "";
+  const csrf = cookies.find((c) => c.name.endsWith("cl_csrf"))?.value ?? "";
   const res = await page.request.post(`/api/v1${path}`, { data, headers: { "x-csrf-token": csrf } });
   expect(res.ok(), `${path}: ${await res.text()}`).toBeTruthy();
   return (await res.json()) as { id: string };
@@ -99,17 +99,17 @@ test("find, score, tailor, prepare, track, and measure a job search", async ({ p
   await page.getByRole("navigation", { name: "Settings sections" }).getByRole("link", { name: "Data" }).click();
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download export" }).click();
-  expect((await download).suggestedFilename()).toMatch(/^waypoint-export-\d{4}-\d{2}-\d{2}\.zip$/);
+  expect((await download).suggestedFilename()).toMatch(/^careerline-export-\d{4}-\d{2}-\d{2}\.zip$/);
 
   // --- notifications ---------------------------------------------------------------------------------
   await page.getByRole("navigation", { name: "Settings sections" }).getByRole("link", { name: "Notifications" }).click();
   await page.getByLabel(/^Daily digest/).check();
   await page.getByLabel(/^ntfy push notifications/).check();
-  await page.getByLabel("Topic address").fill("https://ntfy.sh/waypoint-e2e-7c1f9a2b");
+  await page.getByLabel("Topic address").fill("https://ntfy.sh/careerline-e2e-7c1f9a2b");
   await page.getByRole("button", { name: "Save notification settings" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
   await page.reload();
-  await expect(page.getByLabel("Topic address")).toHaveValue("https://ntfy.sh/waypoint-e2e-7c1f9a2b");
+  await expect(page.getByLabel("Topic address")).toHaveValue("https://ntfy.sh/careerline-e2e-7c1f9a2b");
 
   // --- the assistant needs an AI provider, and says so ----------------------------------------------
   await nav.getByRole("link", { name: /Assistant/ }).click();

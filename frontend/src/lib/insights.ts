@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-/** Search analytics from the tracker. Mirrors backend/waypoint/insights. */
+/** Search analytics from the tracker. Mirrors backend/careerline/insights. */
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { api } from "./api";
 import { localToday } from "./tracker";

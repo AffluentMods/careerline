@@ -37,7 +37,7 @@ Goal: a repo you could make public today. It has a license, CI with security sca
 ├── backend/
 │   ├── pyproject.toml  uv.lock  Dockerfile
 │   ├── alembic/              # migrations
-│   ├── waypoint/
+│   ├── careerline/
 │   │   ├── main.py           # app factory, middleware
 │   │   ├── config.py         # pydantic-settings; secrets from env or *_FILE
 │   │   ├── db.py             # async engine/session
@@ -59,7 +59,7 @@ Goal: a repo you could make public today. It has a license, CI with security sca
 **Data (first Alembic migration):** `user`, `auth_session`, `mfa_recovery_code`, `audit_log`. Every future user-owned table gets a non-null `user_id`, and every query goes through a per-user repository helper. Tests cover cross-user access from day one.
 
 **Endpoints (`/api/v1`):**
-- `POST /auth/register`: the first user becomes the owner. After that, registration is closed unless `WAYPOINT_ALLOW_REGISTRATION=true`.
+- `POST /auth/register`: the first user becomes the owner. After that, registration is closed unless `CAREERLINE_ALLOW_REGISTRATION=true`.
 - `POST /auth/login`: on success, returns either a full session or, when MFA is on, an `mfa_pending` session that can only call `/auth/mfa/verify`.
 - `POST /auth/mfa/verify`: accepts a TOTP code or a one-time recovery code.
 - `POST /auth/logout`, `GET /auth/me`, `GET /auth/sessions`, `DELETE /auth/sessions/{id}`.

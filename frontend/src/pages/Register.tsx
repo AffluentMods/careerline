@@ -53,7 +53,7 @@ export function RegisterPage({ firstRun = false }: { firstRun?: boolean }) {
 
   return (
     <AuthLayout
-      title={firstRun ? "Set up Waypoint" : "Create your account"}
+      title={firstRun ? "Set up CareerLine" : "Create your account"}
       subtitle={
         firstRun
           ? "Create the owner account for this server. Registration closes after this unless you turn it on."

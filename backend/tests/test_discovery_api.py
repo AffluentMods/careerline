@@ -12,12 +12,12 @@ from conftest import TEST_KEY
 from fake_web import FakeWeb
 from sqlalchemy import select, update
 
-from waypoint import db as dbmod
-from waypoint.config import Settings
-from waypoint.discovery.models import JobSource, QueuedJob
-from waypoint.security.crypto import FieldCipher
-from waypoint.worker import queue
-from waypoint.worker.runner import WorkerContext, drain, schedule_due
+from careerline import db as dbmod
+from careerline.config import Settings
+from careerline.discovery.models import JobSource, QueuedJob
+from careerline.security.crypto import FieldCipher
+from careerline.worker import queue
+from careerline.worker.runner import WorkerContext, drain, schedule_due
 
 D = "/api/v1/discovery"
 NORTHWIND_GH = {

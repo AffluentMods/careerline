@@ -14,20 +14,20 @@ import httpx
 import pytest
 from sqlalchemy import select
 
+from careerline import db
+from careerline.config import Settings
+from careerline.discovery.models import JobPosting
+from careerline.notify import senders
+from careerline.notify.models import NotificationLog, NotificationSettings
+from careerline.notify.senders import Message
+from careerline.security.crypto import FieldCipher
+from careerline.worker import handlers  # noqa: F401  (registers the notification jobs)
+from careerline.worker.runner import WorkerContext, drain, schedule_due
 from tests.conftest import TEST_PASSWORD
 from tests.fake_web import FakeWeb
-from waypoint import db
-from waypoint.config import Settings
-from waypoint.discovery.models import JobPosting
-from waypoint.notify import senders
-from waypoint.notify.models import NotificationLog, NotificationSettings
-from waypoint.notify.senders import Message
-from waypoint.security.crypto import FieldCipher
-from waypoint.worker import handlers  # noqa: F401  (registers the notification jobs)
-from waypoint.worker.runner import WorkerContext, drain, schedule_due
 
 N = "/api/v1/notifications"
-NTFY = "https://ntfy.example.com/waypoint-jordan-4821"
+NTFY = "https://ntfy.example.com/careerline-jordan-4821"
 DISCORD = "https://discord.com/api/webhooks/123/secret-token"
 
 
@@ -131,7 +131,7 @@ def test_payloads_escape_untrusted_text() -> None:
         kind="matches",
         title="1 new job match",
         lines=["@everyone [Claim prize](https://evil.example) <https://evil.example|click> **x**"],
-        link="https://waypoint.example.com/jobs",
+        link="https://careerline.example.com/jobs",
     )
     d = senders.discord_payload(msg)
     assert d["allowed_mentions"] == {"parse": []}
@@ -140,8 +140,8 @@ def test_payloads_escape_untrusted_text() -> None:
     s = senders.slack_payload(msg)
     assert "<https://evil.example|click>" not in s["text"] and "&lt;https" in s["text"]
     server, body = senders.ntfy_payload(NTFY, msg)
-    assert server == "https://ntfy.example.com/" and body["topic"] == "waypoint-jordan-4821"
-    assert body["click"] == "https://waypoint.example.com/jobs"
+    assert server == "https://ntfy.example.com/" and body["topic"] == "careerline-jordan-4821"
+    assert body["click"] == "https://careerline.example.com/jobs"
     assert "\n" not in senders.clean("line one\nline two\r\x00")
 
 
@@ -151,7 +151,7 @@ async def test_test_sends_on_each_channel(
     web: FakeWeb,
     mail: list[EmailMessage],
 ) -> None:
-    s = make_settings(smtp_host="smtp.example.com", smtp_from="waypoint@example.com")
+    s = make_settings(smtp_host="smtp.example.com", smtp_from="careerline@example.com")
     c = app_factory(s)
     await c.get("/api/v1/auth/status")
     await c.post(
@@ -177,7 +177,7 @@ async def test_test_sends_on_each_channel(
         r = await c.post(f"{N}/test", json={"channel": channel})
         assert r.json() == {"ok": True, "error": None}, channel
     assert mail[0]["To"] == "jordan@example.com"
-    assert mail[0]["Subject"] == "Waypoint test notification"
+    assert mail[0]["Subject"] == "CareerLine test notification"
     ntfy = next(r for r in web.requests if r.headers["host"] == "ntfy.example.com")
     assert ntfy.headers["authorization"] == "Bearer tk_secret"
     assert _bodies(web, "discord.com")[0]["allowed_mentions"] == {"parse": []}
@@ -245,7 +245,7 @@ async def test_daily_digest(
     await drain(ctx)
     sent = _bodies(web, "ntfy.example.com")
     assert len(sent) == 1
-    assert sent[0]["title"].startswith("Waypoint: 1 thing to do")
+    assert sent[0]["title"].startswith("CareerLine: 1 thing to do")
     assert "Today: Follow up with Litware" in sent[0]["message"]
     # Once a day.
     await schedule_due(ctx)
@@ -299,7 +299,7 @@ async def test_demo_mode_blocks_sending(
     c = app_factory(s)
     await c.get("/api/v1/auth/status")
     async with db.get_sessionmaker()() as session:
-        from waypoint.demo import DEMO_EMAIL, DEMO_PASSWORD, seed_demo
+        from careerline.demo import DEMO_EMAIL, DEMO_PASSWORD, seed_demo
 
         await seed_demo(session, FieldCipher(s.encryption_keys.get_secret_value()))
         await session.commit()

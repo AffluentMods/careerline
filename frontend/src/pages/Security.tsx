@@ -168,7 +168,7 @@ function MfaCard() {
       ) : !enabled && step === "scan" && setup ? (
         <form className="mfa-setup" onSubmit={confirmSetup}>
           <div className="qr-box">
-            {qr ? <img src={qr} alt="QR code to add Waypoint to your authenticator app" width={200} height={200} /> : null}
+            {qr ? <img src={qr} alt="QR code to add CareerLine to your authenticator app" width={200} height={200} /> : null}
           </div>
           <div className="stack">
             <ol className="plain-steps">
@@ -250,13 +250,13 @@ function MfaCard() {
 
 function RecoveryCodes({ codes, onDone }: { codes: string[]; onDone: () => void }) {
   const [copied, setCopied] = useState(false);
-  const text = `Waypoint recovery codes\nEach code works once.\n\n${codes.join("\n")}\n`;
+  const text = `CareerLine recovery codes\nEach code works once.\n\n${codes.join("\n")}\n`;
 
   function download() {
     const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = "waypoint-recovery-codes.txt";
+    a.download = "careerline-recovery-codes.txt";
     a.click();
     URL.revokeObjectURL(url);
   }

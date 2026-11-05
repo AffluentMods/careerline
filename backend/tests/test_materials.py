@@ -14,13 +14,13 @@ import pytest
 from pypdf import PdfReader
 from sqlalchemy import select
 
-from waypoint import db as dbmod
-from waypoint.ai import service as ai_service
-from waypoint.ai.facts import Fact, FactSet, fact_text
-from waypoint.ai.models import AiSettings
-from waypoint.ai.providers import FakeProvider, fake_text
-from waypoint.materials import build, export
-from waypoint.models import AuditLog
+from careerline import db as dbmod
+from careerline.ai import service as ai_service
+from careerline.ai.facts import Fact, FactSet, fact_text
+from careerline.ai.models import AiSettings
+from careerline.ai.providers import FakeProvider, fake_text
+from careerline.materials import build, export
+from careerline.models import AuditLog
 
 M = "/api/v1/materials"
 V = "/api/v1/vault"

@@ -1,6 +1,6 @@
 # Threat Model
 
-Covers all eight phases of Waypoint 1.0: authentication and platform, Career Vault and resume import, tracker, job discovery, AI, tailored materials, the assistant and interview prep, and the Phase 8 additions (insights, notifications, export/import, encrypted backups, single sign-on, demo mode). Last updated 2026-11-04.
+Covers all eight phases of CareerLine 1.0: authentication and platform, Career Vault and resume import, tracker, job discovery, AI, tailored materials, the assistant and interview prep, and the Phase 8 additions (insights, notifications, export/import, encrypted backups, single sign-on, demo mode). Last updated 2026-11-04.
 
 ## Assets
 
@@ -12,7 +12,7 @@ Covers all eight phases of Waypoint 1.0: authentication and platform, Career Vau
 | Contacts | Other people's names, emails, and phone numbers. |
 | Account credentials, TOTP secrets, recovery codes | Give full access to everything else. |
 | Session tokens | Equivalent to a signed-in user. |
-| Encryption key (`WAYPOINT_ENCRYPTION_KEYS`) | Decrypts every encrypted field. |
+| Encryption key (`CAREERLINE_ENCRYPTION_KEYS`) | Decrypts every encrypted field. |
 | API keys for job sources and AI providers | Cost the owner money and leak data if stolen. |
 | Notification addresses and tokens (webhook URLs, ntfy topics) | Anyone holding them can post to, or read, the user's channel. |
 | Exports and backups | A complete copy of one account (export, decrypted) or of every account (backup, encrypted). |
@@ -69,7 +69,7 @@ Covers all eight phases of Waypoint 1.0: authentication and platform, Career Vau
 | E5 | Header injection via file names | Stored names are sanitized; the download header uses an ASCII fallback plus RFC 5987 `filename*` encoding. | ✅ |
 | D7 | Storage exhaustion | 10 MB per attachment (route-specific body limit), 250 MB per user (configurable), 60 uploads per hour per user. | ✅ |
 | I10 | Pasted job descriptions as an injection vector | Stored and shown as plain text only (React escaping, `white-space: pre-wrap`); never rendered as HTML or Markdown. They will be treated as untrusted data in AI prompts (Phase 5). | ✅ |
-| T7 | SSRF through job sources, link import, AI endpoints, or webhooks | One outbound client (`SafeFetcher`): http/https only, no credentials in URLs, standard ports, DNS resolved and **every** address required to be public (IPv4-mapped IPv6 handled), the connection pinned to the checked address (no DNS-rebinding window) with SNI and Host preserved, redirects followed manually and re-checked (max 3; none for webhooks and sign-in), 5 MB response cap, no proxy settings from the environment. Private targets only for the owner's AI and notification endpoints, or for everyone with `WAYPOINT_OUTBOUND_ALLOW_PRIVATE`. | ✅ |
+| T7 | SSRF through job sources, link import, AI endpoints, or webhooks | One outbound client (`SafeFetcher`): http/https only, no credentials in URLs, standard ports, DNS resolved and **every** address required to be public (IPv4-mapped IPv6 handled), the connection pinned to the checked address (no DNS-rebinding window) with SNI and Host preserved, redirects followed manually and re-checked (max 3; none for webhooks and sign-in), 5 MB response cap, no proxy settings from the environment. Private targets only for the owner's AI and notification endpoints, or for everyone with `CAREERLINE_OUTBOUND_ALLOW_PRIVATE`. | ✅ |
 | T8 | Scraping sites that forbid it | Only documented APIs and feeds; robots.txt checked for link import (RFC 9309: 4xx allows, 5xx disallows); LinkedIn, Indeed, Glassdoor, ZipRecruiter, Monster, SimplyHired, Dice, and CareerBuilder are never fetched; each source shows its terms. | ✅ |
 | T9 | Prompt injection from postings, pages, or resumes | Untrusted text goes into prompts only inside delimited data blocks (tag look-alikes neutralized), with standing rules that data never carries instructions. Model output must match a JSON schema (one retry, then an error). Postings can't trigger tools. Injection-looking text is a red flag in the score. | ✅ |
 | T10 | The AI inventing experience, titles, dates, or numbers | Only usable (verified) facts are sent. Every generated line must cite fact IDs that exist; numbers must appear in the cited facts; uncited cover-letter paragraphs may not contain claims. Anything that fails is flagged, and export is refused until the user edits, approves, or removes it. Structure (titles, employers, dates) always comes from the vault, not the model. | ✅ |
@@ -78,14 +78,14 @@ Covers all eight phases of Waypoint 1.0: authentication and platform, Career Vau
 | I11 | Personal data sent to a hosted AI provider | Only usable vault facts and the posting are sent; emails, phone numbers, and street addresses are removed before hosted calls (on by default). Ollama keeps everything local. API keys are encrypted and never returned by the API. | ✅ |
 | I12 | Generated documents carrying markup into PDF or Word | Text is escaped for ReportLab; DOCX is built from python-docx runs (no HTML). | ✅ |
 | S8 | Single sign-on: forged or replayed tokens, login CSRF, code interception | Authorization code + PKCE (S256), random `state` and `nonce` in an encrypted, HttpOnly, 10-minute flow cookie bound to the browser, compared in constant time; the ID token's signature is checked against the provider's JWKS (no `none`, no HMAC), with issuer, audience/`azp`, expiry, and nonce; provider endpoints must be https; provider errors are shown only as fixed codes; 60 sign-in requests per 5 minutes per IP. | ✅ |
-| S9 | Account takeover through single sign-on | Identities are keyed by issuer + subject, never by email. Linking an existing account needs either a signed-in session (whose user must still be the same at the callback) or `OIDC_LINK_BY_EMAIL` with a **verified** email. A provider account can't be linked to two Waypoint accounts. New accounts only when registration is open or `OIDC_AUTO_CREATE` is on. | ✅ |
+| S9 | Account takeover through single sign-on | Identities are keyed by issuer + subject, never by email. Linking an existing account needs either a signed-in session (whose user must still be the same at the callback) or `OIDC_LINK_BY_EMAIL` with a **verified** email. A provider account can't be linked to two CareerLine accounts. New accounts only when registration is open or `OIDC_AUTO_CREATE` is on. | ✅ |
 | S10 | Open redirect after sign-in | The return path must be a same-site path (`/…`, no `//`, no backslash, limited characters); anything else becomes `/`. | ✅ |
 | S11 | A stolen session exporting everything | Export and import need the password (or a fresh single sign-on) within the last 10 minutes; 10 exports and 5 imports per hour; both audited. | ✅ |
 | T11 | Hostile import archive | Only known tables and columns; values checked against each column's type; vault data validated by the same schemas as the API; links must be http(s) (and the UI only links http(s) addresses anyway); every ID is replaced and references outside the archive are refused, so an archive can't touch other users' rows; pending assistant actions are never carried over; job sources arrive disabled; zip limits (1 GB unpacked, 200 MB per table, 50 MB per file, 100,000 members, never extracted to disk); all in one transaction. | ✅ |
 | I13 | Backups exposing data | Backups are AES-256-GCM encrypted in authenticated 1 MiB chunks (counter + final-chunk flag in the nonce) with a per-file HKDF key, so truncation, reordering, and tampering are detected. Encrypted fields stay encrypted inside. The plaintext staging zip lives only in a private temp file and is deleted afterwards. | ✅ |
 | T12 | Notification content abuse | Posting text in messages is escaped per service (Discord Markdown, Slack `<>&`), Discord `allowed_mentions` is empty, control characters are stripped, and email headers reject line breaks. | ✅ |
 | I14 | Notification secrets leaking | Webhook URLs, ntfy topics and tokens, and the email address are encrypted; the API returns only a masked hint for webhook URLs; they're never exported. | ✅ |
-| E7 | Demo mode exposed to the internet | Demo mode closes registration, blocks every outbound request, and uses a separate database; the documentation says it's for trying Waypoint, not for real data. | ✅ / accepted |
+| E7 | Demo mode exposed to the internet | Demo mode closes registration, blocks every outbound request, and uses a separate database; the documentation says it's for trying CareerLine, not for real data. | ✅ / accepted |
 | E2 | Supply-chain compromise | Lockfiles (`uv.lock`, `package-lock.json`), pinned versions, license allow-list. | ✅ partial — SBOM, Semgrep, Trivy, Dependabot planned with CI |
 
 ## Known gaps
@@ -93,7 +93,7 @@ Covers all eight phases of Waypoint 1.0: authentication and platform, Career Vau
 - No CI pipeline yet. It was deferred at the owner's request while the project runs locally only.
 - The local runner's embedded Postgres trusts connections from 127.0.0.1 without a password. That's acceptable on a single-user desktop. Use Docker Compose (password-protected, private network) on shared machines.
 - Vault facts, postings, and generated documents are stored in plain text so they can be searched, matched, and scored. The database is private to the owner, and backups are encrypted.
-- Signing in through single sign-on skips Waypoint's own TOTP step; the provider is expected to require two factors.
+- Signing in through single sign-on skips CareerLine's own TOTP step; the provider is expected to require two factors.
 - Exports are deliberately decrypted (they're the user's own data, for moving servers). The UI says so; keep them safe.
 - Dependencies aren't scanned automatically yet (no CI). At release (2026-11-04), pip-audit found no known vulnerabilities in the 65 locked Python packages (PyPI and OSV databases), and `npm audit` reported advisories only in development-time lint tooling, none in the shipped UI. Rerun both before upgrading (commands in the README).
-- `WAYPOINT_COOKIE_SECURE=false` is used for plain-http localhost. It must be `true` whenever Waypoint is reachable over a network.
+- `CAREERLINE_COOKIE_SECURE=false` is used for plain-http localhost. It must be `true` whenever CareerLine is reachable over a network.

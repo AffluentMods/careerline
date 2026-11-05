@@ -6,8 +6,8 @@ from typing import get_args
 import pytest
 from fastapi.exceptions import RequestValidationError
 
-from waypoint.models import ENTRY_KINDS
-from waypoint.vault.schemas import (
+from careerline.models import ENTRY_KINDS
+from careerline.vault.schemas import (
     ALLOWED_PARENTS,
     DATA_MODELS,
     Kind,

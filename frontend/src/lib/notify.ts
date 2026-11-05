@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-/** Notification settings. Mirrors backend/waypoint/notify/routes.py. */
+/** Notification settings. Mirrors backend/careerline/notify/routes.py. */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 

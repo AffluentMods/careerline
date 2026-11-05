@@ -8,9 +8,9 @@ import httpx
 import pyotp
 from sqlalchemy import select, text
 
-from waypoint import db as dbmod
-from waypoint.config import Settings
-from waypoint.models import AuditLog, AuthSession, User
+from careerline import db as dbmod
+from careerline.config import Settings
+from careerline.models import AuditLog, AuthSession, User
 
 PASSWORD = "correct horse battery staple"
 OWNER = {"email": "Owner@Example.com", "password": PASSWORD, "display_name": "Sam Owner"}
@@ -168,8 +168,8 @@ async def test_session_token_is_hashed_at_rest(
 
 async def test_session_cookie_flags(client: httpx.AsyncClient) -> None:
     r = await _register(client)
-    cookie = next(v for k, v in r.headers.multi_items() if k == "set-cookie" and "wp_session" in v)
-    assert cookie.startswith("__Host-wp_session=")
+    cookie = next(v for k, v in r.headers.multi_items() if k == "set-cookie" and "cl_session" in v)
+    assert cookie.startswith("__Host-cl_session=")
     for flag in ("HttpOnly", "Secure", "SameSite=lax", "Path=/"):
         assert flag.lower() in cookie.lower()
 

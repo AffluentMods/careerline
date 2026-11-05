@@ -11,8 +11,8 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 
-from waypoint import db as dbmod
-from waypoint.models import AuditLog, VaultProfile
+from careerline import db as dbmod
+from careerline.models import AuditLog, VaultProfile
 
 V = "/api/v1/vault"
 ROLE = {"title": "Security Analyst", "employer": "Northwind Tools", "start": "2021-03"}

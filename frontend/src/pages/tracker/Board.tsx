@@ -20,7 +20,7 @@ import {
   type Stage,
 } from "../../lib/tracker";
 
-const DRAG_TYPE = "application/x-waypoint-application";
+const DRAG_TYPE = "application/x-careerline-application";
 
 /** Shown after a card moves to Applied: offer (never create) a follow-up reminder. */
 export function FollowUpOffer({ app, onClose }: { app: { id: string; title: string }; onClose: () => void }) {

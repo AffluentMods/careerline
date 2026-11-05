@@ -50,11 +50,11 @@ export const SSO_ERRORS: Record<string, string> = {
   token_failed: "Your identity provider didn't complete the sign-in. Try again.",
   bad_token: "The sign-in couldn't be verified, so it was refused. Try again.",
   no_account:
-    "No Waypoint account is linked to that sign-in. Sign in with your password and link it in Settings, or ask the owner to allow new accounts.",
+    "No CareerLine account is linked to that sign-in. Sign in with your password and link it in Settings, or ask the owner to allow new accounts.",
   email_required: "Your identity provider didn't share an email address, which a new account needs.",
   email_taken:
     "An account with that email already exists. Sign in with your password, then link single sign-on in Settings.",
-  linked_elsewhere: "That sign-in is already linked to a different Waypoint account.",
+  linked_elsewhere: "That sign-in is already linked to a different CareerLine account.",
   session_changed: "You signed out or switched accounts during sign-in. Try again.",
   inactive: "That account is turned off.",
 };

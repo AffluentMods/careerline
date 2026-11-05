@@ -1,4 +1,4 @@
-# Waypoint
+# CareerLine
 
 A self-hosted, AI-assisted job search app. It helps you find jobs, decide which are worth it, prepare truthful application materials from your own verified facts, track every application, and prepare for interviews. Your data lives in your own database.
 
@@ -16,7 +16,7 @@ A self-hosted, AI-assisted job search app. It helps you find jobs, decide which 
 
 **Career Vault.** Your single source of truth: profile, roles, responsibilities, achievements (with metrics), projects, certifications, education, skills, links, and STAR stories. Facts are *verified* or *drafts*; only verified facts (whose parents are verified too) are ever used. Import a PDF or Word resume into drafts and approve them on a side-by-side review screen. Contact details are encrypted.
 
-**Jobs.** Add sources (Greenhouse, Lever, Ashby boards, Adzuna, USAJOBS, JSearch, RSS/Atom feeds) and Waypoint fetches them on a schedule, respecting each site's terms and robots.txt. Duplicates across sources are merged. Hard filters (location and radius, work mode, minimum pay, shifts, clearance, keywords, companies) sort postings into Matches and Filtered, with the reason for each. Add a single job by link or by pasting its text. LinkedIn, Indeed, and similar sites are never fetched.
+**Jobs.** Add sources (Greenhouse, Lever, Ashby boards, Adzuna, USAJOBS, JSearch, RSS/Atom feeds) and CareerLine fetches them on a schedule, respecting each site's terms and robots.txt. Duplicates across sources are merged. Hard filters (location and radius, work mode, minimum pay, shifts, clearance, keywords, companies) sort postings into Matches and Filtered, with the reason for each. Add a single job by link or by pasting its text. LinkedIn, Indeed, and similar sites are never fetched.
 
 **Fit scores.** Each posting gets a 0–100 score with matched requirements, gaps, and red flags (scam patterns, injected instructions). Keyword scoring works with no AI at all; AI scoring uses Claude, any OpenAI-compatible API, or a local Ollama. Scores go stale and are redone when your vault changes. The Settings → AI page shows calls, tokens, and estimated cost, with a monthly budget.
 
@@ -26,13 +26,13 @@ A self-hosted, AI-assisted job search app. It helps you find jobs, decide which 
 
 **Interview prep.** Likely questions for a job (behavioral, technical, situational, company), each matched to your STAR stories, with your notes. With an AI provider, practice interviews ask one question at a time and give feedback on each answer.
 
-**Assistant.** Ask about your search ("What should I follow up on this week?"). It reads your Waypoint data through tools; anything that would change it (a reminder, a stage move, a note) shows up as a proposed change with Confirm and Reject buttons.
+**Assistant.** Ask about your search ("What should I follow up on this week?"). It reads your CareerLine data through tools; anything that would change it (a reminder, a stage move, a note) shows up as a proposed change with Confirm and Reject buttons.
 
 **Insights.** Response rate by source, the stage funnel with conversion between stages, time to first response, applications per week, and applications that have gone quiet.
 
 **Notifications.** A daily digest of what's due and alerts for strong new matches, by email (SMTP), [ntfy](https://ntfy.sh) push, or a Discord, Slack, or JSON webhook. Addresses and tokens are encrypted.
 
-**Your data.** Export everything (JSON plus your files, in a zip) after confirming your password, import it into an empty account on any Waypoint server, and keep scheduled encrypted backups of the whole database.
+**Your data.** Export everything (JSON plus your files, in a zip) after confirming your password, import it into an empty account on any CareerLine server, and keep scheduled encrypted backups of the whole database.
 
 ## Run it locally (no Docker)
 
@@ -63,33 +63,33 @@ Options:
 
 | Windows | macOS / Linux | What it does |
 |---|---|---|
-| `-Demo` | `--demo` | Demo mode: a fictional job seeker in a separate database. Sign in as `demo@example.com` / `explore-waypoint`. Nothing is sent outside the server. |
+| `-Demo` | `--demo` | Demo mode: a fictional job seeker in a separate database. Sign in as `demo@example.com` / `explore-careerline`. Nothing is sent outside the server. |
 | `-Dev` | `--dev` | Hot-reloading dev servers (UI on :5173, API docs on :8000/api/docs). |
 | `-Rebuild` | `--rebuild` | Rebuild the UI first. |
 | `-VerifyBackup <file>` | `--verify-backup <file>` | Check that a backup opens. |
 | `-Restore <file>` | `--restore <file>` | Restore a backup into an empty database ([how](docs/operations.md#restoring-local)). |
-| `-RotateKey` | `--rotate-key` | Add a new encryption key and re-encrypt everything with it (Waypoint stopped). |
+| `-RotateKey` | `--rotate-key` | Add a new encryption key and re-encrypt everything with it (CareerLine stopped). |
 | `-KeyStatus` | `--key-status` | Show which encryption keys are still in use. |
 
 ## Run it with Docker Compose
 
 ```bash
-cp .env.example .env      # then fill in POSTGRES_PASSWORD and WAYPOINT_ENCRYPTION_KEYS
+cp .env.example .env      # then fill in POSTGRES_PASSWORD and CAREERLINE_ENCRYPTION_KEYS
 docker compose up -d
 ```
 
-Open http://localhost:8080. Compose runs the app, the worker, and Postgres; backups go to the `backups` volume. The app is bound to `127.0.0.1`. To reach it from other devices, put a TLS reverse proxy (Caddy, Traefik, nginx) in front and set `WAYPOINT_COOKIE_SECURE=true`, `WAYPOINT_HSTS=true`, and `WAYPOINT_PUBLIC_URL`.
+Open http://localhost:8080. Compose runs the app, the worker, and Postgres; backups go to the `backups` volume. The app is bound to `127.0.0.1`. To reach it from other devices, put a TLS reverse proxy (Caddy, Traefik, nginx) in front and set `CAREERLINE_COOKIE_SECURE=true`, `CAREERLINE_HSTS=true`, and `CAREERLINE_PUBLIC_URL`.
 
 ## Moving to another computer
 
 Either copy the folder, or export and import.
 
-**Copy the folder.** Copy everything **except** `node_modules/`, `backend/.venv/`, and `frontend/dist/`, then run the start script on the new machine. Stop Waypoint first.
+**Copy the folder.** Copy everything **except** `node_modules/`, `backend/.venv/`, and `frontend/dist/`, then run the start script on the new machine. Stop CareerLine first.
 
 - Keep **`.env`**: it holds the encryption key. Without it, two-factor secrets, contact details, API keys, attachments, and backups can't be decrypted.
-- Keep **`.localdata/`** for your account and data (and your backups). If Waypoint was closed abruptly, the next start may pause for about 30 seconds while the database recovers. That's expected.
+- Keep **`.localdata/`** for your account and data (and your backups). If CareerLine was closed abruptly, the next start may pause for about 30 seconds while the database recovers. That's expected.
 
-**Export and import.** Settings → Data → *Download export* on the old server; create an account on the new one and use *Import from a Waypoint export*. You'll re-enter API keys and notification addresses afterwards (they're never exported).
+**Export and import.** Settings → Data → *Download export* on the old server; create an account on the new one and use *Import from a CareerLine export*. You'll re-enter API keys and notification addresses afterwards (they're never exported).
 
 ## Documentation
 
@@ -103,7 +103,7 @@ The docs also build into a small site with [MkDocs](https://www.mkdocs.org/) (op
 # backend (from backend/)
 uv sync
 uv run pytest              # API + unit tests against a real (embedded) Postgres
-uv run ruff check . && uv run ruff format --check . && uv run mypy waypoint
+uv run ruff check . && uv run ruff format --check . && uv run mypy careerline
 
 # frontend (from frontend/)
 npm ci

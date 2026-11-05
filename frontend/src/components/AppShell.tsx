@@ -82,13 +82,13 @@ export function AppShell({ user }: { user: User }) {
           <MenuIcon />
         </button>
         <span className="brand">
-          <Logo size={24} /> Waypoint
+          <Logo size={24} /> CareerLine
         </span>
       </header>
 
       <aside id="sidebar" className="sidebar">
         <div className="brand brand-lg">
-          <Logo /> <span>Waypoint</span>
+          <Logo /> <span>CareerLine</span>
         </div>
         <nav aria-label="Main">
           <ul className="nav-list">

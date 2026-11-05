@@ -12,11 +12,11 @@ import httpx
 import pytest
 from sqlalchemy import select
 
-from waypoint import db as dbmod
-from waypoint.ai import service as ai_service
-from waypoint.ai.providers import Completion, FakeProvider, ToolCall, fake_text
-from waypoint.models import AuditLog
-from waypoint.tracker.models import Reminder
+from careerline import db as dbmod
+from careerline.ai import service as ai_service
+from careerline.ai.providers import Completion, FakeProvider, ToolCall, fake_text
+from careerline.models import AuditLog
+from careerline.tracker.models import Reminder
 
 AS = "/api/v1/assistant"
 IV = "/api/v1/interview"

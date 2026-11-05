@@ -15,15 +15,15 @@ import pyotp
 import pytest
 from sqlalchemy import select
 
+from careerline import db, model_registry
+from careerline.config import Settings
+from careerline.data import rekey
+from careerline.db import Base
+from careerline.models import User
+from careerline.security import contexts
+from careerline.security.crypto import FieldCipher, generate_key
 from tests.conftest import BACKEND, TEST_PASSWORD
 from tests.resume_fixtures import make_pdf
-from waypoint import db, model_registry
-from waypoint.config import Settings
-from waypoint.data import rekey
-from waypoint.db import Base
-from waypoint.models import User
-from waypoint.security import contexts
-from waypoint.security.crypto import FieldCipher, generate_key
 
 _ = model_registry
 
@@ -125,7 +125,7 @@ async def _fill_every_encrypted_column(
         "/api/v1/notifications/settings",
         json={
             "email_to": "jordan@example.com",
-            "ntfy_url": "https://ntfy.sh/waypoint-rotation-test",
+            "ntfy_url": "https://ntfy.sh/careerline-rotation-test",
             "ntfy_token": "tk_secret",
             "webhook_kind": "discord",
             "webhook_url": "https://discord.com/api/webhooks/1/token",
@@ -185,7 +185,7 @@ async def test_rotate_then_drop_the_old_key(
     assert file.content == seeded["pdf"]
     notify = (await c.get("/api/v1/notifications/settings")).json()
     assert notify["email_to"] == "jordan@example.com" and notify["has_ntfy_token"] is True
-    assert notify["ntfy_url"] == "https://ntfy.sh/waypoint-rotation-test"
+    assert notify["ntfy_url"] == "https://ntfy.sh/careerline-rotation-test"
     assert notify["webhook_hint"] == "https://discord.com/…"
 
     # Values only the worker or the AI layer read: decrypt them directly with key 2 alone.
@@ -194,8 +194,8 @@ async def test_rotate_then_drop_the_old_key(
         jordan = await s.scalar(select(User).where(User.email == "jordan@example.com"))
         casey = await s.scalar(select(User).where(User.email == "casey@example.com"))
         assert jordan is not None and casey is not None
-        from waypoint.ai.models import AiSettings
-        from waypoint.discovery.models import JobSource
+        from careerline.ai.models import AiSettings
+        from careerline.discovery.models import JobSource
 
         ai = await s.get(AiSettings, jordan.id)
         assert ai is not None and ai.api_key_enc
@@ -228,13 +228,13 @@ def test_rotate_env_key(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
     import run_local  # type: ignore[import-not-found]
 
     env = tmp_path / ".env"
-    env.write_text(f"# keep me\nWAYPOINT_ENCRYPTION_KEYS=1:{OLD}\nWAYPOINT_ENV=production\n")
+    env.write_text(f"# keep me\nCAREERLINE_ENCRYPTION_KEYS=1:{OLD}\nCAREERLINE_ENV=production\n")
     monkeypatch.setattr(run_local, "ENV_FILE", env)
-    monkeypatch.delenv("WAYPOINT_ENCRYPTION_KEYS", raising=False)
+    monkeypatch.delenv("CAREERLINE_ENCRYPTION_KEYS", raising=False)
     monkeypatch.setattr(run_local, "server_running", lambda port: False)
     assert run_local.rotate_env_key(8080) == "2"
     lines = env.read_text().splitlines()
-    assert lines[0] == "# keep me" and lines[2] == "WAYPOINT_ENV=production"
+    assert lines[0] == "# keep me" and lines[2] == "CAREERLINE_ENV=production"
     keyring = lines[1].split("=", 1)[1]
     assert keyring.startswith("2:") and keyring.endswith(f",1:{OLD}")
     FieldCipher(keyring)  # valid
@@ -244,6 +244,6 @@ def test_rotate_env_key(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
     with pytest.raises(SystemExit, match="running"):
         run_local.rotate_env_key(8080)
     monkeypatch.setattr(run_local, "server_running", lambda port: False)
-    monkeypatch.setenv("WAYPOINT_ENCRYPTION_KEYS", f"1:{OLD}")
+    monkeypatch.setenv("CAREERLINE_ENCRYPTION_KEYS", f"1:{OLD}")
     with pytest.raises(SystemExit, match="set in the environment"):
         run_local.rotate_env_key(8080)

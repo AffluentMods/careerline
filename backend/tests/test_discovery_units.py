@@ -5,8 +5,8 @@ import httpx
 import pytest
 from fake_web import JOB_PAGE, FakeWeb
 
-from waypoint.discovery.adapters import SourceError, parse_feed, run_adapter
-from waypoint.discovery.normalize import (
+from careerline.discovery.adapters import SourceError, parse_feed, run_adapter
+from careerline.discovery.normalize import (
     NormalizedPosting,
     detect_clearance,
     detect_shifts,
@@ -15,8 +15,13 @@ from waypoint.discovery.normalize import (
     html_to_text,
     parse_pay,
 )
-from waypoint.discovery.page_import import ImportRefused, blocked_domain, import_url, parse_job_page
-from waypoint.net import FetchError, SafeFetcher, is_public_address, robots_allows
+from careerline.discovery.page_import import (
+    ImportRefused,
+    blocked_domain,
+    import_url,
+    parse_job_page,
+)
+from careerline.net import FetchError, SafeFetcher, is_public_address, robots_allows
 
 # --- SSRF guard -------------------------------------------------------------------------------
 
@@ -90,7 +95,7 @@ async def test_fetcher_pins_the_checked_address_and_keeps_host() -> None:
     assert req.url.host == "93.184.216.34"
     assert req.headers["host"] == "feeds.example.org"
     assert req.extensions.get("sni_hostname") == "feeds.example.org"
-    assert req.headers["user-agent"].startswith("Waypoint/")
+    assert req.headers["user-agent"].startswith("CareerLine/")
 
 
 async def test_redirect_to_private_address_is_blocked() -> None:

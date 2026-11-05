@@ -236,7 +236,7 @@ export function SourcesTab() {
   return (
     <section className="stack" aria-label="Sources">
       <p className="muted small">
-        Each source uses an official API or a public feed and runs in the background on its schedule. Waypoint never scrapes sites
+        Each source uses an official API or a public feed and runs in the background on its schedule. CareerLine never scrapes sites
         that don&apos;t allow it.
       </p>
       {chosen ? (

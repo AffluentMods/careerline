@@ -4,8 +4,8 @@ import time
 import pyotp
 import pytest
 
-from waypoint.security import passwords, totp
-from waypoint.security.crypto import CryptoError, FieldCipher, generate_key
+from careerline.security import passwords, totp
+from careerline.security.crypto import CryptoError, FieldCipher, generate_key
 
 
 def test_cipher_round_trip_and_context_binding() -> None:

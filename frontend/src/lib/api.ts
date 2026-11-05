@@ -21,7 +21,7 @@ export class ApiError extends Error {
 
 type ErrorBody = { error?: { code?: string; message?: string; fields?: FieldError[] } } | null;
 
-const CSRF_COOKIES = ["__Host-wp_csrf", "wp_csrf"];
+const CSRF_COOKIES = ["__Host-cl_csrf", "cl_csrf"];
 
 export function readCsrfToken(cookieString: string = document.cookie): string | undefined {
   for (const part of cookieString.split(";")) {
@@ -48,7 +48,7 @@ export async function api<T>(path: string, options: { method?: Method; body?: un
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
   } catch {
-    throw new ApiError(0, "network_error", "Can't reach the server. Check that Waypoint is running.");
+    throw new ApiError(0, "network_error", "Can't reach the server. Check that CareerLine is running.");
   }
 
   if (res.status === 204) return undefined as T;
@@ -83,7 +83,7 @@ export async function apiUpload<T>(
       body: file,
     });
   } catch {
-    throw new ApiError(0, "network_error", "Can't reach the server. Check that Waypoint is running.");
+    throw new ApiError(0, "network_error", "Can't reach the server. Check that CareerLine is running.");
   }
   const data: unknown = await res.json().catch(() => null);
   if (!res.ok) {
@@ -105,7 +105,7 @@ export async function apiDownload(path: string): Promise<{ blob: Blob; filename:
       credentials: "same-origin",
     });
   } catch {
-    throw new ApiError(0, "network_error", "Can't reach the server. Check that Waypoint is running.");
+    throw new ApiError(0, "network_error", "Can't reach the server. Check that CareerLine is running.");
   }
   if (!res.ok) {
     const data = (await res.json().catch(() => null)) as ErrorBody;
@@ -144,7 +144,7 @@ export function fieldErrors(err: unknown): Record<string, string> {
   return out;
 }
 
-// --- API types (mirror backend/waypoint/auth/schemas.py) ---------------------------
+// --- API types (mirror backend/careerline/auth/schemas.py) ---------------------------
 
 export interface User {
   id: string;

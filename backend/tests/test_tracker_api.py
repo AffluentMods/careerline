@@ -13,10 +13,10 @@ from resume_fixtures import make_pdf
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 
-from waypoint import db as dbmod
-from waypoint.config import Settings
-from waypoint.models import AuditLog
-from waypoint.tracker.models import Attachment, Contact
+from careerline import db as dbmod
+from careerline.config import Settings
+from careerline.models import AuditLog
+from careerline.tracker.models import Attachment, Contact
 
 T = "/api/v1/tracker"
 

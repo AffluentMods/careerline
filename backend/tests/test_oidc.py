@@ -16,13 +16,13 @@ import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+from careerline.auth import oidc
+from careerline.config import Settings
 from tests.conftest import TEST_PASSWORD
 from tests.fake_web import FakeWeb
-from waypoint.auth import oidc
-from waypoint.config import Settings
 
 ISSUER = "https://idp.example.test"
-CLIENT = "waypoint"
+CLIENT = "careerline"
 SECRET = "client-secret-for-tests-only-0123456789"
 
 
@@ -117,7 +117,7 @@ def sso_settings(make_settings: Callable[..., Settings]) -> Callable[..., Settin
             oidc_issuer=ISSUER,
             oidc_client_id=CLIENT,
             oidc_client_secret=SECRET,
-            public_url="https://waypoint.example.com",
+            public_url="https://careerline.example.com",
             **over,
         )
 
@@ -159,9 +159,9 @@ async def test_status_and_authorize_request(
     q = parse_qs(parts.query)
     assert f"{parts.scheme}://{parts.netloc}{parts.path}" == f"{ISSUER}/authorize"
     assert q["client_id"] == [CLIENT] and q["response_type"] == ["code"]
-    assert q["redirect_uri"] == ["https://waypoint.example.com/api/v1/auth/oidc/callback"]
+    assert q["redirect_uri"] == ["https://careerline.example.com/api/v1/auth/oidc/callback"]
     assert q["code_challenge_method"] == ["S256"] and len(q["state"][0]) > 30
-    cookie = c.cookies.get("__Host-wp_oidc")
+    cookie = c.cookies.get("__Host-cl_oidc")
     assert cookie and q["state"][0] not in cookie  # the flow state is encrypted
 
 
