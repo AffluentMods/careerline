@@ -6,6 +6,7 @@ export const SETTINGS_TABS = [
   { slug: "ai", label: "AI" },
   { slug: "notifications", label: "Notifications" },
   { slug: "data", label: "Data" },
+  { slug: "api", label: "API access" },
 ];
 
 export function SettingsNav() {

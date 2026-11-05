@@ -18,7 +18,7 @@ function json(body: unknown, status = 200) {
 const NOW = "2026-11-04T12:00:00Z";
 
 function conversation(over: Partial<ConversationDetail> = {}): ConversationDetail {
-  return { id: "c1", title: "Follow-ups", created_at: NOW, updated_at: NOW, messages: [], pending: 0, ...over };
+  return { id: "c1", title: "Follow-ups", source: "chat", created_at: NOW, updated_at: NOW, messages: [], pending: 0, ...over };
 }
 
 function renderAt(path: string) {
@@ -114,6 +114,32 @@ describe("assistant page", () => {
     expect(sent.text).toBe("What is due?");
     expect(sent.today).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(screen.getByLabelText("Message")).toHaveValue("");
+  });
+
+  it("lets you decide API-key proposals even without an AI provider", async () => {
+    const api = conversation({
+      id: "k1",
+      title: "Proposed by API key “Claude”",
+      source: "api",
+      pending: 1,
+      messages: [{ id: "a1", role: "action", text: "Add a reminder: “Follow up”", status: "pending", tool: "create_reminder" }],
+    });
+    mockApi((url, init) => {
+      if (url.endsWith("/assistant/conversations") && (init?.method ?? "GET") === "GET") return json([conversation(), api]);
+      if (url.endsWith("/assistant/conversations/k1")) return json(api);
+      return undefined;
+    }, "none");
+    renderAt("/assistant/k1");
+
+    expect(await screen.findByText(/Add a reminder/)).toBeInTheDocument();
+    expect(screen.getByText(/needs an AI provider/)).toBeInTheDocument();
+    // Only the API conversation is listed, there's nothing to type into, and no new chats.
+    const list = screen.getByRole("complementary", { name: "Conversations" });
+    expect(within(list).getAllByRole("link").map((l) => l.textContent)).toEqual(["Proposed by API key “Claude”"]);
+    expect(screen.queryByLabelText("Message")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "New conversation" })).not.toBeInTheDocument();
+    expect(screen.getByText(/proposed by an AI agent using one of your API keys/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Confirm" })).toBeEnabled();
   });
 
   it("keeps the draft when sending fails", async () => {

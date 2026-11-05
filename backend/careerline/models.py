@@ -189,7 +189,7 @@ class VaultEntry(UUIDPk, Timestamps, Base):
             name="fk_vault_entries_parent",
         ),
         CheckConstraint("kind IN (" + ", ".join(f"'{k}'" for k in ENTRY_KINDS) + ")", name="kind"),
-        CheckConstraint("source IN ('manual', 'import')", name="source"),
+        CheckConstraint("source IN ('manual', 'import', 'api')", name="source"),
         CheckConstraint("parent_id IS NULL OR parent_id <> id", name="not_own_parent"),
         Index("ix_vault_entries_user_kind", "user_id", "kind"),
     )

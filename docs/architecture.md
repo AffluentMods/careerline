@@ -53,6 +53,7 @@ Two processes share one database: the **app** (API + UI) and the **worker** (sch
 | `data/` | Value codec, per-user export/import (`portable.py`), encrypted whole-database backups and restore (`backup.py`), the backup job, `/api/v1/data`, and `python -m careerline.data`. |
 | `auth/oidc.py` | OpenID Connect sign-in, account linking, and re-authentication, `/api/v1/auth/oidc`. |
 | `demo.py` | The fictional demo account and its seed data. |
+| `api_access/` | API keys (`models.py`, `tokens.py`: hashed like sessions, scoped `read` / `draft` / `propose`, optional expiry), `/api/v1/api-tokens` to list, create (after re-authentication), and revoke them, and the MCP endpoint (`mcp.py`, `POST /api/mcp`) that external agents use. See [API access](api-access.md). |
 | `security/contexts.py` | Every encryption context (the associated data binding a value to its row and column), shared by the app, export/import, and re-encryption. |
 | `data/rekey.py` | Re-encrypts every encrypted column with the active key (`python -m careerline.data rekey`, `keys`). |
 | `model_registry.py` | Imports every table module, so tools that walk the metadata (backups, export) see every table. |
@@ -175,7 +176,9 @@ A document's content is JSON: sections of *items*, each with text, cited fact ID
 
 ## Assistant and interview prep
 
-The assistant loop sends the conversation and the tool list to the model, runs read tools immediately, and turns write tools into `pending_actions`. The UI shows each as a card; Confirm runs the tool (re-checking ownership) and Reject records the refusal. The model is told the outcome on its next turn. Interview prep builds questions from templates or the model, links each to verified stories, and stores notes; mock interviews keep their turns in JSON and end after the chosen number of questions.
+The assistant loop sends the conversation and the tool list to the model, runs read tools immediately, and turns write tools into `pending_actions`. The UI shows each as a card; Confirm runs the tool (re-checking ownership and locking the action row, so two confirms apply it once) and Reject records the refusal. The model is told the outcome on its next turn.
+
+External agents use the same tools through `/api/mcp`. A key's proposals go into one conversation per key with `source = 'api'`, which the Assistant page shows (even with no AI provider configured) but won't chat in, since its history didn't come from a model. Vault facts and stories added with a key are inserted unverified with `source = 'api'`. Interview prep builds questions from templates or the model, links each to verified stories, and stores notes; mock interviews keep their turns in JSON and end after the chosen number of questions.
 
 ## Phase 8
 
@@ -216,5 +219,7 @@ React 19 + TypeScript + Vite. TanStack Query holds server state, and React Route
 | Charts in SVG/CSS | No chart dependency; small, accessible, and themed with the app's tokens. |
 | Export decrypted, backups encrypted | Exports move one person's data between servers with different keys; backups protect everyone's data on disk. |
 | Fresh IDs on import | The same export can be imported on the server it came from without colliding with the original rows. |
+| External agents through MCP, with the assistant's rules | One standard protocol works with Claude, ChatGPT, and other agents. Keys reach only that endpoint; drafts and proposals reuse the vault's verification and the assistant's pending actions, so "truthful by design" and "you stay in charge" hold for any agent. |
+| MCP implemented directly, not with the SDK | Stateless JSON-RPC over one POST route is about 200 lines; the SDK would add a dozen dependencies and session state we don't need. |
 | PyJWT for ID tokens | Well-tested JWS verification (MIT); everything else in the sign-on flow is small and audited here. |
 | Rule-based resume parser first | Deterministic, testable, and offline. AI-assisted import waits for the Phase 5 provider layer and its injection defenses. |

@@ -297,6 +297,11 @@ export function EntryItem({
             {showKind ? <span className="kind-tag">{KIND_LABEL[entry.kind]}</span> : null}
             <span className="entry-title">{title}</span>
             <StateBadge entry={entry} />
+            {entry.source === "api" ? (
+              <span className="badge" title="Added by an AI agent with one of your API keys">
+                From API
+              </span>
+            ) : null}
           </div>
           {subtitle || dates ? (
             <p className="muted small">{[subtitle, dates].filter(Boolean).join(" · ")}</p>

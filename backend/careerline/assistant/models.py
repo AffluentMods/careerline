@@ -29,10 +29,18 @@ def _user() -> Any:
 
 class Conversation(UUIDPk, Timestamps, Base):
     __tablename__ = "conversations"
-    __table_args__ = (UniqueConstraint("user_id", "id", name="uq_conversations_user_id_id"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "id", name="uq_conversations_user_id_id"),
+        CheckConstraint("source IN ('chat', 'api')", name="source"),
+    )
 
     user_id: Mapped[uuid.UUID] = _user()
     title: Mapped[str] = mapped_column(String(200), default="New conversation", nullable=False)
+    # "chat": a conversation with the built-in assistant. "api": changes proposed through an
+    # API key, shown here so the user can confirm or reject them. It can't be chatted in.
+    source: Mapped[str] = mapped_column(
+        String(8), default="chat", server_default="chat", nullable=False
+    )
 
 
 class ChatMessage(UUIDPk, Base):

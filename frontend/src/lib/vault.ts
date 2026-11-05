@@ -26,7 +26,8 @@ export interface Entry {
   verified: boolean;
   verified_at: string | null;
   usable: boolean;
-  source: "manual" | "import";
+  /** "api": added by an AI agent through an API key (always starts as a draft). */
+  source: "manual" | "import" | "api";
   import_id: string | null;
   created_at: string;
   updated_at: string;

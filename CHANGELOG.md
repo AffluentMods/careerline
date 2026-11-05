@@ -11,6 +11,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - The outbound-request guard now judges NAT64 addresses (`64:ff9b::/96`) by the IPv4 address they embed and refuses deprecated IPv4-compatible addresses (`::/96`), so a host resolving to, for example, `64:ff9b::a9fe:a9fe` can't reach `169.254.169.254` through a NAT64 gateway.
 
 ### Added
+- **API access for AI agents.** Settings → API access creates personal API keys (shown once, stored hashed, scoped to read / add drafts / propose changes, with an expiry; creating one needs the password). Agents connect over MCP at `POST /api/mcp` (Claude Code, Claude Desktop, ChatGPT, and other MCP clients) and get 21 tools: read the vault, jobs, tracker, and agenda; add vault facts and STAR stories as unverified drafts marked "From API"; add jobs by link or text; and propose reminders, stage moves, notes, saving or tracking jobs, and profile changes, which wait for Confirm on the Assistant page. Keys can't reach the account, security settings, export, deletion, or anything outside the server. Rate-limited and audited (`api_token.created`, `api_token.revoked`, `api.tool`). See `docs/api-access.md`.
+- The assistant can propose profile changes (name, headline, location, summary) with `update_profile`.
 - GitHub Actions CI: backend lint, types, tests (against Postgres 16), and pip-audit; frontend lint, types, tests, build, license check, and runtime npm audit; Playwright end-to-end tests; and a Docker image build.
 - `CAREERLINE_BIND` (Docker Compose): the host address the app's port is published on. Defaults to `127.0.0.1`; set a LAN address to reach CareerLine from other devices without a reverse proxy.
 

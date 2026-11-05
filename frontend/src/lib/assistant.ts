@@ -16,6 +16,8 @@ export interface ChatItem {
 export interface Conversation {
   id: string;
   title: string;
+  /** "api": changes proposed through an API key. They're confirmed here but not chatted in. */
+  source: "chat" | "api";
   created_at: string;
   updated_at: string;
 }

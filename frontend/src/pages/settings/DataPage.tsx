@@ -45,12 +45,15 @@ export function ConfirmIdentity({
   action,
   onConfirmed,
   onCancel,
+  returnTo = "/settings/data",
 }: {
   user: User;
   status: AuthStatus;
   action: string;
   onConfirmed: () => void;
   onCancel: () => void;
+  /** Where single sign-on brings the user back to. */
+  returnTo?: string;
 }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +87,7 @@ export function ConfirmIdentity({
             onClick={async () => {
               setBusy(true);
               try {
-                await reauthWithSso("/settings/data");
+                await reauthWithSso(returnTo);
               } catch (err) {
                 setError(errorMessage(err));
                 setBusy(false);

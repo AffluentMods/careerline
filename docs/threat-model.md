@@ -1,6 +1,6 @@
 # Threat Model
 
-Covers all eight phases of CareerLine 1.0: authentication and platform, Career Vault and resume import, tracker, job discovery, AI, tailored materials, the assistant and interview prep, and the Phase 8 additions (insights, notifications, export/import, encrypted backups, single sign-on, demo mode). Last updated 2026-11-04.
+Covers all eight phases of CareerLine 1.0: authentication and platform, Career Vault and resume import, tracker, job discovery, AI, tailored materials, the assistant and interview prep, and the Phase 8 additions (insights, notifications, export/import, encrypted backups, single sign-on, demo mode), plus API keys and the MCP endpoint for external agents. Last updated 2026-11-05.
 
 ## Assets
 
@@ -12,6 +12,7 @@ Covers all eight phases of CareerLine 1.0: authentication and platform, Career V
 | Contacts | Other people's names, emails, and phone numbers. |
 | Account credentials, TOTP secrets, recovery codes | Give full access to everything else. |
 | Session tokens | Equivalent to a signed-in user. |
+| API keys for the MCP endpoint | Let an agent read the account's job search and add drafts or proposals, within the key's permissions. |
 | Encryption key (`CAREERLINE_ENCRYPTION_KEYS`) | Decrypts every encrypted field. |
 | API keys for job sources and AI providers | Cost the owner money and leak data if stolen. |
 | Notification addresses and tokens (webhook URLs, ntfy topics) | Anyone holding them can post to, or read, the user's channel. |
@@ -28,6 +29,7 @@ Covers all eight phases of CareerLine 1.0: authentication and platform, Career V
 6. **API process and extraction worker.** Resume files are parsed in a separate, short-lived process that gets no secrets.
 7. **Model and tools.** The assistant's model can call read tools freely; every tool that changes data needs the user's Confirm.
 8. **Archives from elsewhere.** An imported export may have been made or edited by someone else.
+9. **External agents with API keys** (`/api/mcp`). The agent is a model the user chose, but it may be confused or prompt-injected by what it reads elsewhere. It's treated like the built-in assistant's model: it can read within the key's permissions, add only unverified drafts, and propose changes the user confirms.
 
 ## Threats and mitigations (STRIDE)
 
@@ -86,14 +88,18 @@ Covers all eight phases of CareerLine 1.0: authentication and platform, Career V
 | T12 | Notification content abuse | Posting text in messages is escaped per service (Discord Markdown, Slack `<>&`), Discord `allowed_mentions` is empty, control characters are stripped, and email headers reject line breaks. | ✅ |
 | I14 | Notification secrets leaking | Webhook URLs, ntfy topics and tokens, and the email address are encrypted; the API returns only a masked hint for webhook URLs; they're never exported. | ✅ |
 | E7 | Demo mode exposed to the internet | Demo mode closes registration, blocks every outbound request, and uses a separate database; the documentation says it's for trying CareerLine, not for real data. | ✅ / accepted |
-| E2 | Supply-chain compromise | Lockfiles (`uv.lock`, `package-lock.json`), pinned versions, license allow-list. | ✅ partial — SBOM, Semgrep, Trivy, Dependabot planned with CI |
+| S12 | A stolen or leaked API key | Keys are 256-bit random values stored only as SHA-256 hashes; shown once; scoped (read / add drafts / propose); expire after 7–365 days unless the user chooses never; revocable at once; creation needs the password within the last 10 minutes and is audited. A key works only on `/api/mcp` (session cookies don't, and keys don't work anywhere else), so it can never reach the account, security settings, other keys, export, or deletion. Last use is shown per key. | ✅ |
+| E8 | An agent with a key overreaching (confused or prompt-injected) | Vault facts and stories it adds are always unverified drafts, marked as from the API, and drafts are never used for documents or scores; everything else it can change is a proposal the user confirms, re-validated at apply time; there are no delete, edit-in-place, or send tools; contact details are never returned; untrusted text is wrapped and the server's instructions say not to follow it; 300 changes per key per hour, at most 50 waiting proposals per key; every change is audited with the key's id. | ✅ |
+| D9 | Flooding through the MCP endpoint | 600 requests per key per 10 minutes; 30 failed key attempts per IP per 15 minutes; the normal body-size limit; no server-sent streams or sessions to hold open. | ✅ |
+| S13 | Cross-site requests to `/api/mcp` from a browser (DNS rebinding) | The endpoint needs a bearer key (no cookies), and requests whose `Origin` isn't the server's own address (or `CAREERLINE_PUBLIC_URL`) are refused. | ✅ |
+| E2 | Supply-chain compromise | Lockfiles (`uv.lock`, `package-lock.json`), pinned versions, license allow-list; CI runs pip-audit and `npm audit` on every push. | ✅ partial — SBOM, Semgrep, Trivy, Dependabot not yet |
 
 ## Known gaps
 
-- No CI pipeline yet. It was deferred at the owner's request while the project runs locally only.
 - The local runner's embedded Postgres trusts connections from 127.0.0.1 without a password. That's acceptable on a single-user desktop. Use Docker Compose (password-protected, private network) on shared machines.
 - Vault facts, postings, and generated documents are stored in plain text so they can be searched, matched, and scored. The database is private to the owner, and backups are encrypted.
 - Signing in through single sign-on skips CareerLine's own TOTP step; the provider is expected to require two factors.
 - Exports are deliberately decrypted (they're the user's own data, for moving servers). The UI says so; keep them safe.
-- Dependencies aren't scanned automatically yet (no CI). At release (2026-11-04), pip-audit found no known vulnerabilities in the 65 locked Python packages (PyPI and OSV databases), and `npm audit` reported advisories only in development-time lint tooling, none in the shipped UI. Rerun both before upgrading (commands in the README).
-- `CAREERLINE_COOKIE_SECURE=false` is used for plain-http localhost. It must be `true` whenever CareerLine is reachable over a network.
+- CI (GitHub Actions) runs pip-audit on the locked Python packages and `npm audit` on the UI's runtime packages on every push. Development-only npm tooling isn't gated.
+- `CAREERLINE_COOKIE_SECURE=false` is needed for plain `http://` (localhost or a home LAN). Over plain http, session cookies and API keys cross the network unencrypted, so anyone able to watch that network could take them. Use it only on a network you trust; otherwise put a TLS reverse proxy (or a VPN such as Tailscale) in front and set it to `true`.
+- API keys survive a password change (like most personal access tokens). After a suspected compromise, change the password **and** revoke keys in Settings → API access.

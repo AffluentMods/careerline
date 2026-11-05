@@ -73,6 +73,8 @@ class DecisionIn(Strict):
 class ConversationOut(BaseModel):
     id: uuid.UUID
     title: str
+    # "chat", or "api" for changes proposed through an API key (read-only here).
+    source: str
     created_at: datetime
     updated_at: datetime
 
@@ -100,6 +102,7 @@ async def _detail(db: AsyncSession, conv: Conversation) -> ConversationDetail:
     return ConversationDetail(
         id=conv.id,
         title=conv.title,
+        source=conv.source,
         created_at=conv.created_at,
         updated_at=conv.updated_at,
         messages=chat.display(all_msgs, actions),
@@ -153,6 +156,12 @@ async def send_message(
 ) -> ConversationDetail:
     uid = auth.user.id
     conv = await _owned(db, Conversation, uid, conv_id)
+    if conv.source == "api":
+        raise ApiError(
+            409,
+            "api_conversation",
+            "This holds changes proposed through an API key. Start a new conversation to chat.",
+        )
     pending = await db.scalar(
         select(PendingAction.id)
         .where(

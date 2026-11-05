@@ -221,6 +221,7 @@ async def test_restore_refuses_other_versions(
     settings = make_settings(backup_dir=str(tmp_path))
     made = await backup.create_backup(db.get_sessionmaker(), settings)
     async with db.get_sessionmaker()() as s:
+        current = await s.scalar(text("SELECT version_num FROM alembic_version"))
         await s.execute(text("UPDATE alembic_version SET version_num = '0001'"))
         await s.commit()
     try:
@@ -228,7 +229,7 @@ async def test_restore_refuses_other_versions(
             await backup.restore_backup(db.get_sessionmaker(), settings, tmp_path / made.name)
     finally:
         async with db.get_sessionmaker()() as s:
-            await s.execute(text("UPDATE alembic_version SET version_num = :v"), {"v": "0008"})
+            await s.execute(text("UPDATE alembic_version SET version_num = :v"), {"v": current})
             await s.commit()
 
 

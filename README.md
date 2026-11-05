@@ -28,6 +28,8 @@ A self-hosted, AI-assisted job search app. It helps you find jobs, decide which 
 
 **Assistant.** Ask about your search ("What should I follow up on this week?"). It reads your CareerLine data through tools; anything that would change it (a reminder, a stage move, a note) shows up as a proposed change with Confirm and Reject buttons.
 
+**Bring your own AI agent.** Create an API key in Settings → API access and connect Claude, ChatGPT, or any [MCP](https://modelcontextprotocol.io) client. Your agent can read your search, fill in your Career Vault from your resume, add jobs, and propose changes. Facts it adds stay drafts until you verify them, and changes wait for your Confirm. See [API access](docs/api-access.md).
+
 **Insights.** Response rate by source, the stage funnel with conversion between stages, time to first response, applications per week, and applications that have gone quiet.
 
 **Notifications.** A daily digest of what's due and alerts for strong new matches, by email (SMTP), [ntfy](https://ntfy.sh) push, or a Discord, Slack, or JSON webhook. Addresses and tokens are encrypted.
@@ -93,7 +95,7 @@ Either copy the folder, or export and import.
 
 ## Documentation
 
-[User guide](docs/guide.md) · [Operations: backups, single sign-on, notifications, demo](docs/operations.md) · [Configuration](docs/configuration.md) · [Architecture](docs/architecture.md) · [Threat model](docs/threat-model.md) · [Security policy](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
+[User guide](docs/guide.md) · [API access for AI agents](docs/api-access.md) · [Operations: backups, single sign-on, notifications, demo](docs/operations.md) · [Configuration](docs/configuration.md) · [Architecture](docs/architecture.md) · [Threat model](docs/threat-model.md) · [Security policy](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
 The docs also build into a small site with [MkDocs](https://www.mkdocs.org/) (optional, not a project dependency): `uvx mkdocs serve` from the repo root.
 

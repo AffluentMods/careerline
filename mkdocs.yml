@@ -10,6 +10,7 @@ theme:
 nav:
   - Home: index.md
   - User guide: guide.md
+  - API access for AI agents: api-access.md
   - Operations: operations.md
   - Configuration: configuration.md
   - Architecture: architecture.md

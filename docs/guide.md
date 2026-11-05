@@ -57,6 +57,8 @@ On a posting or application, **Prepare questions** lists likely behavioral, tech
 
 **Assistant** answers questions about your search using your data: "What should I follow up on this week?", "Which saved jobs fit me best?" It can look things up on its own. Anything that would change your data (add a reminder, move an application, add a note, save or track a job) appears as a **proposed change** with **Confirm** and **Reject**; nothing changes until you confirm. It never sends email or messages.
 
+**Use your own AI agent instead (or as well).** In **Settings → API access**, create a key and connect Claude, ChatGPT, or another MCP client. Ask it to fill in your vault from your resume, add jobs, or plan your follow-ups. Facts it adds show up in the Career Vault as drafts marked **From API** for you to verify, and its proposed changes wait under "Proposed by API key …" on the Assistant page. This works without setting up an AI provider in CareerLine. See [API access](api-access.md).
+
 ## 8. See what's working
 
 **Insights** shows, for all time or the last 30/90/365 days:

@@ -702,6 +702,11 @@ code {
   word-break: break-all;
   user-select: all;
 }
+.snippet {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  font-size: 0.82rem;
+}
 .codes {
   list-style: none;
   margin: 0;

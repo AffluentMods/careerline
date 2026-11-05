@@ -21,6 +21,9 @@ export function AssistantPage() {
 
   if (ai.isPending) return <FullPageLoader />;
   const aiOn = Boolean(ai.data && ai.data.provider !== "none");
+  const list = conversations.data ?? [];
+  // Changes proposed through API keys need deciding even when no AI provider is set up here.
+  const visible = aiOn ? list : list.filter((c) => c.source === "api");
 
   return (
     <div className="page page-wide">
@@ -35,21 +38,24 @@ export function AssistantPage() {
         <Notice tone="info">
           The assistant needs an AI provider. <Link to="/settings/ai">Turn one on in Settings → AI</Link>.
         </Notice>
-      ) : (
+      ) : null}
+      {aiOn || visible.length ? (
         <div className="chat-layout">
           <aside className="chat-list" aria-label="Conversations">
-            <Button
-              variant="secondary"
-              busy={m.create.isPending}
-              onClick={async () => {
-                const c = await m.create.mutateAsync();
-                navigate(`/assistant/${c.id}`);
-              }}
-            >
-              New conversation
-            </Button>
+            {aiOn ? (
+              <Button
+                variant="secondary"
+                busy={m.create.isPending}
+                onClick={async () => {
+                  const c = await m.create.mutateAsync();
+                  navigate(`/assistant/${c.id}`);
+                }}
+              >
+                New conversation
+              </Button>
+            ) : null}
             <ul>
-              {(conversations.data ?? []).map((c) => (
+              {visible.map((c) => (
                 <li key={c.id}>
                   <NavLink to={`/assistant/${c.id}`} className="chat-link">
                     {c.title}
@@ -58,9 +64,9 @@ export function AssistantPage() {
               ))}
             </ul>
           </aside>
-          {id ? <Chat key={id} id={id} /> : <Welcome />}
+          {id ? <Chat key={id} id={id} canChat={aiOn} /> : aiOn ? <Welcome /> : null}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -134,7 +140,7 @@ function Bubble({ item }: { item: ChatItem }) {
   );
 }
 
-function Chat({ id }: { id: string }) {
+function Chat({ id, canChat }: { id: string; canChat: boolean }) {
   const conv = useConversation(id);
   const m = useAssistantMutations();
   const navigate = useNavigate();
@@ -197,6 +203,12 @@ function Chat({ id }: { id: string }) {
       <div ref={endRef} />
       {m.send.error ? <Notice>{errorMessage(m.send.error)}</Notice> : null}
       {m.decide.error ? <Notice>{errorMessage(m.decide.error)}</Notice> : null}
+      {c.source === "api" ? (
+        <p className="small muted">
+          These changes were proposed by an AI agent using one of your API keys. Nothing happens until you confirm a
+          change. <Link to="/settings/api">Manage API keys</Link>
+        </p>
+      ) : canChat ? (
       <form className="chat-input" onSubmit={submit}>
         <label htmlFor="chat-text" className="sr-only">
           Message
@@ -215,6 +227,7 @@ function Chat({ id }: { id: string }) {
           Send
         </Button>
       </form>
+      ) : null}
     </section>
   );
 }

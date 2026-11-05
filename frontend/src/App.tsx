@@ -17,6 +17,7 @@ import { PlaceholderPage } from "./pages/Placeholder";
 import { RegisterPage } from "./pages/Register";
 import { SecurityPage } from "./pages/Security";
 import { AiSettingsPage } from "./pages/settings/AiSettingsPage";
+import { ApiAccessPage } from "./pages/settings/ApiAccessPage";
 import { DataPage } from "./pages/settings/DataPage";
 import { NotificationsPage } from "./pages/settings/NotificationsPage";
 import { ApplicationPage } from "./pages/tracker/ApplicationPage";
@@ -69,6 +70,7 @@ export function App() {
         <Route path="settings/ai" element={<AiSettingsPage />} />
         <Route path="settings/notifications" element={<NotificationsPage />} />
         <Route path="settings/data" element={<DataPage />} />
+        <Route path="settings/api" element={<ApiAccessPage />} />
         <Route path="*" element={<PlaceholderPage title="Page not found" summary="That page doesn't exist." />} />
       </Route>
     </Routes>

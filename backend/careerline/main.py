@@ -15,6 +15,8 @@ from sqlalchemy import text
 
 from careerline import __version__, db
 from careerline.ai.routes import router as ai_router
+from careerline.api_access.mcp import router as mcp_router
+from careerline.api_access.routes import router as api_tokens_router
 from careerline.assistant.routes import router as assistant_router
 from careerline.auth.oidc import router as oidc_router
 from careerline.auth.routes import router as auth_router
@@ -82,6 +84,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(notify_router)
     app.include_router(data_router)
     app.include_router(oidc_router)
+    app.include_router(api_tokens_router)
+    app.include_router(mcp_router)
 
     @app.get("/api/healthz", include_in_schema=False)
     async def healthz() -> dict[str, str]:

@@ -441,6 +441,14 @@ async def import_posting(
     body: ImportIn, request: Request, auth: CurrentUser, db: DB
 ) -> PostingDetail:
     uid = auth.user.id
+    posting = await import_one(request, db, uid, body)
+    return await posting_detail(request, db, uid, posting)
+
+
+async def import_one(
+    request: Request, db: AsyncSession, uid: uuid.UUID, body: ImportIn
+) -> JobPosting:
+    """Add one posting from a link or pasted text (also used by the MCP ``import_job`` tool)."""
     if not body.url and not body.text.strip():
         raise ApiError(422, "nothing_to_import", "Paste a link to the posting, or its text.")
     await check_and_hit(db, f"posting_import:{uid}", IMPORTS_PER_HOUR, timedelta(hours=1))
@@ -473,8 +481,7 @@ async def import_posting(
         )
     await enqueue(db, "score_postings", {}, user_id=uid, dedupe_key=f"score:{uid}")
     await db.commit()
-    posting = await _get_posting(db, uid, posting_id)  # type: ignore[arg-type]
-    return await posting_detail(request, db, uid, posting)
+    return await _get_posting(db, uid, posting_id)  # type: ignore[arg-type]
 
 
 # --- filters -------------------------------------------------------------------------------

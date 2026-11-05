@@ -26,6 +26,7 @@ from careerline.ai.scoring import scores_for, tokens
 from careerline.discovery.models import JobFilters, JobPosting
 from careerline.discovery.normalize import hourly_cents
 from careerline.discovery.service import evaluate, track
+from careerline.models import VaultProfile
 from careerline.tracker import service as tracker
 from careerline.tracker.models import (
     Application,
@@ -108,6 +109,22 @@ class SaveJob(ToolInput):
 
 class TrackJob(ToolInput):
     posting_id: str
+
+
+Line = Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)]
+
+
+class UpdateProfile(ToolInput):
+    full_name: Line | None = Field(default=None, description="New full name, or null to keep.")
+    headline: Line | None = Field(
+        default=None, description="New one-line headline (e.g. 'Data Analyst'), or null to keep."
+    )
+    location_text: Line | None = Field(
+        default=None, description="New location (e.g. 'Riverton, WA'), or null to keep."
+    )
+    summary: Annotated[str, StringConstraints(strip_whitespace=True, max_length=4000)] | None = (
+        Field(default=None, description="New profile summary, or null to keep.")
+    )
 
 
 class ToolError(Exception):
@@ -409,6 +426,42 @@ async def apply_track(db: AsyncSession, uid: uuid.UUID, a: TrackJob) -> str:
     return f"Added to the tracker (application {app.id})."
 
 
+_PROFILE_LABELS = {
+    "full_name": "name",
+    "headline": "headline",
+    "location_text": "location",
+    "summary": "summary",
+}
+
+
+def _profile_changes(a: UpdateProfile) -> dict[str, str]:
+    return {k: v for k in _PROFILE_LABELS if (v := getattr(a, k)) is not None}
+
+
+async def describe_profile(db: AsyncSession, uid: uuid.UUID, a: UpdateProfile) -> str:
+    changes = _profile_changes(a)
+    if not changes:
+        raise ToolError("Nothing to change: give at least one field.")
+    parts = []
+    for key, value in changes.items():
+        shown = value if len(value) <= 80 else value[:77] + "..."
+        parts.append(f"{_PROFILE_LABELS[key]} to “{shown}”" if value else f"clear the {key}")
+    return f"Change your profile: {'; '.join(parts)}."
+
+
+async def apply_profile(db: AsyncSession, uid: uuid.UUID, a: UpdateProfile) -> str:
+    changes = _profile_changes(a)
+    if not changes:
+        raise ToolError("Nothing to change.")
+    row = await db.get(VaultProfile, uid)
+    if row is None:
+        row = VaultProfile(user_id=uid)
+        db.add(row)
+    for key, value in changes.items():
+        setattr(row, key, value)
+    return "Profile updated."
+
+
 # --- registry ------------------------------------------------------------------------------
 
 Reader = Callable[[AsyncSession, uuid.UUID, Any, date], Awaitable[Any]]
@@ -509,6 +562,14 @@ TOOLS: dict[str, Tool] = {
             TrackJob,
             describe=describe_track,
             apply=apply_track,
+        ),
+        Tool(
+            "update_profile",
+            "Propose changes to the profile's name, headline, location, or summary "
+            "(contact details can only be edited by the user). The user must confirm it.",
+            UpdateProfile,
+            describe=describe_profile,
+            apply=apply_profile,
         ),
     ]
 }

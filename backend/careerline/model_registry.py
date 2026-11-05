@@ -7,6 +7,7 @@ first; otherwise only the tables some earlier import happened to load are seen.
 
 from careerline import models  # noqa: F401
 from careerline.ai import models as ai_models  # noqa: F401
+from careerline.api_access import models as api_access_models  # noqa: F401
 from careerline.assistant import models as assistant_models  # noqa: F401
 from careerline.discovery import models as discovery_models  # noqa: F401
 from careerline.materials import models as materials_models  # noqa: F401
