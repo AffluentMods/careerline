@@ -24,8 +24,9 @@ jobs:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: careerline_test
+          # Throwaway database reachable only from this runner: no password needed.
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U postgres -d careerline_test"
@@ -35,7 +36,7 @@ jobs:
         working-directory: backend
     env:
       # tests/test_backup.py creates a second database, so this user needs CREATEDB.
-      CAREERLINE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/careerline_test
+      CAREERLINE_TEST_DATABASE_URL: postgresql://postgres@localhost:5432/careerline_test
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6
