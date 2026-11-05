@@ -17,7 +17,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from urllib.parse import quote, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 import pgserver
 from pgserver.postgres_server import PostgresServer
@@ -64,15 +64,21 @@ def _server(data: Path) -> object:
         return pgserver.get_server(data, cleanup_mode=None)
 
 
-def tcp_url(srv: object, db_name: str) -> str:
-    """Return a TCP URL usable by asyncpg (pgserver may hand back a socket URL)."""
+def connection_url(srv: object, db_name: str) -> str:
+    """A URL for asyncpg pointing at ``db_name`` on the embedded server.
+
+    pgserver listens on TCP (127.0.0.1) on Windows, but only on a Unix socket on Linux and
+    macOS, where it reports ``postgresql://postgres:@/postgres?host=<socket dir>``. Keep
+    whichever it reports: asyncpg connects to the socket directory given as ``?host=``.
+    """
     uri: str = srv.get_uri()  # type: ignore[attr-defined]
     parsed = urlparse(uri)
+    user = quote(parsed.username or "postgres")
+    socket_dir = parse_qs(parsed.query).get("host", [""])[0]
+    if socket_dir:
+        return f"postgresql://{user}@/{db_name}?host={quote(socket_dir, safe='/')}"
     host = parsed.hostname or "127.0.0.1"
     port = parsed.port or 5432
-    if "host=" in (parsed.query or "") or host.startswith("/"):
-        host = "127.0.0.1"
-    user = quote(parsed.username or "postgres")
     return f"postgresql://{user}@{host}:{port}/{db_name}"
 
 
@@ -116,7 +122,7 @@ def main() -> int:
         print(srv.get_uri())  # type: ignore[attr-defined]
         return 0
     ensure_database(srv, args.db)
-    print(tcp_url(srv, args.db))
+    print(connection_url(srv, args.db))
     return 0
 
 

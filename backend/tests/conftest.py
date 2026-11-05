@@ -41,7 +41,7 @@ def database_url() -> Iterator[str]:
     srv = localdb._server(data)
     srv.psql("DROP DATABASE IF EXISTS careerline_test WITH (FORCE);")
     localdb.ensure_database(srv, "careerline_test")
-    yield localdb.tcp_url(srv, "careerline_test")
+    yield localdb.connection_url(srv, "careerline_test")
 
 
 @pytest.fixture(scope="session")

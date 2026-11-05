@@ -196,7 +196,7 @@ def main() -> int:
             sys.exit("--fresh is refused for the main data directory; use --pgdata.")
         srv.psql(f'DROP DATABASE IF EXISTS "{localdb.DB_NAME}" WITH (FORCE);')  # type: ignore[attr-defined]
     localdb.ensure_database(srv, localdb.DB_NAME)
-    env["CAREERLINE_DATABASE_URL"] = localdb.tcp_url(srv, localdb.DB_NAME)
+    env["CAREERLINE_DATABASE_URL"] = localdb.connection_url(srv, localdb.DB_NAME)
 
     print("Applying migrations…")
     py = sys.executable

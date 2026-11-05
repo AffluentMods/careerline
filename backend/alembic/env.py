@@ -7,14 +7,8 @@ import os
 from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from careerline import models  # noqa: F401  (registers tables on Base.metadata)
-from careerline.ai import models as ai_models  # noqa: F401
-from careerline.assistant import models as assistant_models  # noqa: F401
+from careerline import model_registry  # noqa: F401  (registers every table on Base.metadata)
 from careerline.db import Base
-from careerline.discovery import models as discovery_models  # noqa: F401
-from careerline.materials import models as materials_models  # noqa: F401
-from careerline.notify import models as notify_models  # noqa: F401
-from careerline.tracker import models as tracker_models  # noqa: F401
 
 
 def _url() -> str:
