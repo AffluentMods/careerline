@@ -127,8 +127,12 @@ describe("API access page", () => {
     await userEvent.selectOptions(screen.getByLabelText("Expires after"), "never");
     await userEvent.click(screen.getByRole("button", { name: "Create key" }));
 
-    await userEvent.type(await screen.findByLabelText("Password"), "correct horse battery staple");
+    const password = await screen.findByLabelText("Password");
+    // A form inside the key form makes real browsers submit (and reload) the outer one.
+    expect(password.closest("form")?.parentElement?.closest("form")).toBeNull();
+    await userEvent.type(password, "correct horse battery staple");
     await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    expect(calls.filter((c) => c.method === "POST" && c.url.endsWith("/api-tokens"))).toHaveLength(2);
 
     expect(await screen.findByLabelText("API key")).toHaveTextContent(SECRET);
     expect(screen.getByText(/only time it's shown/)).toBeInTheDocument();

@@ -97,16 +97,7 @@ function CreateKeyCard({ onCreated }: { onCreated: (k: CreatedApiKey) => void })
           No key can change your password, two-factor, sessions, or settings, export your data, delete anything, or send
           anything outside this server.
         </p>
-        {confirming && me.data && status.data ? (
-          <ConfirmIdentity
-            user={me.data}
-            status={status.data}
-            action="create an API key"
-            returnTo="/settings/api"
-            onConfirmed={() => void run()}
-            onCancel={() => setConfirming(false)}
-          />
-        ) : (
+        {confirming ? null : (
           <div>
             <Button type="submit" busy={create.isPending} disabled={!name.trim() || scopes.length === 0}>
               Create key
@@ -115,6 +106,18 @@ function CreateKeyCard({ onCreated }: { onCreated: (k: CreatedApiKey) => void })
         )}
         {create.error && !reauthError ? <Notice>{errorMessage(create.error)}</Notice> : null}
       </form>
+      {/* The password check is its own form, so it must sit outside the key form: a form nested in
+          another makes the browser submit (and reload) the outer one instead. */}
+      {confirming && me.data && status.data ? (
+        <ConfirmIdentity
+          user={me.data}
+          status={status.data}
+          action="create an API key"
+          returnTo="/settings/api"
+          onConfirmed={() => void run()}
+          onCancel={() => setConfirming(false)}
+        />
+      ) : null}
     </Card>
   );
 }

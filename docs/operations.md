@@ -167,6 +167,15 @@ To start the demo over, stop it and delete `.localdata/pg-demo`.
 
 Read the [changelog](../CHANGELOG.md) first for anything that needs attention.
 
+If you installed with `git clone`, steps 2 and 3 with Docker Compose are:
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+Keep server-specific Compose changes (reverse-proxy labels, extra networks) in `compose.override.yaml`, which Compose merges automatically and git ignores, so updates never conflict with them.
+
 ## Logs and the audit log
 
 The app and worker log to the console (the local runner's window, or `docker compose logs app worker`). Security events go to the `audit_log` table: sign-ins (password and single sign-on), failures, two-factor changes, password confirmations, exports and imports, backup requests, AI and notification setting changes, job sources added or removed, generated and exported documents, assistant actions you confirmed, and deletions of applications, contacts, and attachments. Every AI call (feature, model, tokens, cost, outcome) is also logged in `ai_runs`, visible in Settings → AI.

@@ -4,6 +4,11 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-11-05
+
+### Fixed
+- Creating an API key did nothing once CareerLine asked for your password again: the password box was a form inside the key form, so pressing Enter or Confirm reloaded the page instead of checking the password. It's now a separate form, and the key is created after you confirm.
+
 ## [1.1.1] - 2026-11-05
 
 ### Fixed

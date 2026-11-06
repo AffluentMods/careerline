@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+# Server-specific Compose additions (reverse proxy labels, networks)
+compose.override.yaml
 .localdata/
 *.pem
 *.key
