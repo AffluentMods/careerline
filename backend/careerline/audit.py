@@ -31,6 +31,10 @@ def record(
     **details: Any,
 ) -> None:
     """Add an audit entry to the session. The caller commits."""
+    # Changes made with an API key (REST) say which key, so the user can trace them.
+    key_id = getattr(request.state, "api_token_id", None)
+    if key_id and "token_id" not in details:
+        details = {**details, "via_api_key": key_id}
     db.add(
         AuditLog(
             user_id=user_id,

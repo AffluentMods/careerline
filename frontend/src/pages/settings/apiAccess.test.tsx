@@ -145,6 +145,45 @@ describe("API access page", () => {
     expect(screen.getByRole("button", { name: "Create key" })).toBeInTheDocument();
   });
 
+  it("upgrades an existing key to full access after the password", async () => {
+    let key: ApiKey = { ...KEY, scopes: ["read", "draft", "propose"] };
+    let reauthed = false;
+    const calls = mockApi((url, method, body) => {
+      if (url.endsWith("/api-tokens") && method === "GET") return json([key]);
+      if (url.endsWith("/auth/reauth") && method === "POST") {
+        reauthed = true;
+        return json({ until: "2026-11-05T12:10:00Z" });
+      }
+      if (url.endsWith("/api-tokens/k1") && method === "PATCH") {
+        if (!reauthed) return json({ error: { code: "reauth_required", message: "Confirm it's you first." } }, 403);
+        key = { ...key, scopes: (body as { scopes: ApiKey["scopes"] }).scopes };
+        return json(key);
+      }
+      return undefined;
+    });
+    renderPage();
+
+    const list = await screen.findByRole("list", { name: "API keys" });
+    await userEvent.click(within(list).getByRole("button", { name: "Change access for Claude" }));
+    const form = within(list).getByRole("form", { name: "Access for Claude" });
+    await userEvent.click(within(form).getByRole("checkbox", { name: /Full access/ }));
+    // Full access includes the rest, shown as included and locked.
+    expect(within(form).getByRole("checkbox", { name: /Add drafts/ })).toBeChecked();
+    expect(within(form).getByRole("checkbox", { name: /Add drafts/ })).toBeDisabled();
+    expect(within(form).getByText(/nothing waits for your Confirm/)).toBeInTheDocument();
+    await userEvent.click(within(form).getByRole("button", { name: "Save access" }));
+
+    const password = await within(list).findByLabelText("Password");
+    expect(password.closest("form")?.parentElement?.closest("form")).toBeNull();
+    await userEvent.type(password, "correct horse battery staple{Enter}");
+
+    expect(await within(list).findByText("Full access", { selector: ".badge" })).toBeInTheDocument();
+    expect(within(list).getByText(/^Full access ·/)).toBeInTheDocument();
+    const patches = calls.filter((c) => c.method === "PATCH");
+    expect(patches.at(-1)?.body).toEqual({ scopes: ["full"] });
+    expect(within(list).queryByRole("form", { name: "Access for Claude" })).not.toBeInTheDocument();
+  });
+
   it("can't create a key with nothing allowed", async () => {
     mockApi((url, method) => (url.endsWith("/api-tokens") && method === "GET" ? json([]) : undefined));
     renderPage();

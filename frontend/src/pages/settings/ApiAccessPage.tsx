@@ -5,6 +5,7 @@ import { Button, Card, Checkbox, Field, Notice, SelectField } from "../../compon
 import { ApiError, errorMessage } from "../../lib/api";
 import {
   connectionSnippets,
+  describeScopes,
   EXPIRY_OPTIONS,
   mcpUrl,
   parseExpiry,
@@ -12,6 +13,7 @@ import {
   useApiKeys,
   useCreateApiKey,
   useRevokeApiKey,
+  useUpdateApiKeyScopes,
   type ApiKey,
   type CreatedApiKey,
   type Scope,
@@ -31,7 +33,7 @@ export function ApiAccessPage() {
       <p className="muted">
         Let your own AI agent (Claude, ChatGPT, or any MCP client) work in your account: read your search, add career
         facts and jobs, and propose changes. Facts it adds stay drafts until you verify them, and every change it proposes
-        waits for your Confirm.
+        waits for your Confirm, unless you give the key full access.
       </p>
       {created ? <NewKeyCard created={created} onDone={() => setCreated(null)} /> : <CreateKeyCard onCreated={setCreated} />}
       <KeysCard />
@@ -64,10 +66,6 @@ function CreateKeyCard({ onCreated }: { onCreated: (k: CreatedApiKey) => void })
     void run();
   }
 
-  function toggle(scope: Scope, on: boolean) {
-    setScopes((s) => (on ? [...s, scope] : s.filter((x) => x !== scope)));
-  }
-
   const reauthError = create.error instanceof ApiError && create.error.code === "reauth_required";
   return (
     <Card title="Create an API key" description="Give each agent its own key, so you can see what it did and revoke it on its own.">
@@ -80,23 +78,9 @@ function CreateKeyCard({ onCreated }: { onCreated: (k: CreatedApiKey) => void })
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <fieldset className="check-group stack-sm" aria-label="What this key may do">
-          <legend>What it may do</legend>
-          {SCOPE_INFO.map((s) => (
-            <Checkbox
-              key={s.scope}
-              label={s.label}
-              hint={s.hint}
-              checked={scopes.includes(s.scope)}
-              onChange={(e) => toggle(s.scope, e.target.checked)}
-            />
-          ))}
-        </fieldset>
+        <ScopePicker scopes={scopes} onChange={setScopes} />
         <SelectField label="Expires after" options={EXPIRY_OPTIONS} value={expiry} onChange={(e) => setExpiry(e.target.value)} />
-        <p className="small muted">
-          No key can change your password, two-factor, sessions, or settings, export your data, delete anything, or send
-          anything outside this server.
-        </p>
+        <AccessNote />
         {confirming ? null : (
           <div>
             <Button type="submit" busy={create.isPending} disabled={!name.trim() || scopes.length === 0}>
@@ -119,6 +103,46 @@ function CreateKeyCard({ onCreated }: { onCreated: (k: CreatedApiKey) => void })
         />
       ) : null}
     </Card>
+  );
+}
+
+/** What a key may do. Full access includes the rest, so they show as included while it's on. */
+function ScopePicker({ scopes, onChange }: { scopes: Scope[]; onChange: (s: Scope[]) => void }) {
+  const full = scopes.includes("full");
+  function toggle(scope: Scope, on: boolean) {
+    if (scope === "full") onChange(on ? ["full"] : ["read", "draft", "propose"]);
+    else onChange(on ? [...scopes, scope] : scopes.filter((x) => x !== scope));
+  }
+  return (
+    <fieldset className="check-group stack-sm" aria-label="What this key may do">
+      <legend>What it may do</legend>
+      {SCOPE_INFO.map((s) => (
+        <Checkbox
+          key={s.scope}
+          label={s.label}
+          hint={s.hint}
+          checked={full || scopes.includes(s.scope)}
+          disabled={full && s.scope !== "full"}
+          onChange={(e) => toggle(s.scope, e.target.checked)}
+        />
+      ))}
+      {full ? (
+        <Notice tone="info">
+          Anyone with this key can change or delete anything in your job search, and nothing waits for your Confirm.
+          Your nightly backups are the way back from a mistake.
+        </Notice>
+      ) : null}
+    </fieldset>
+  );
+}
+
+function AccessNote() {
+  return (
+    <p className="small muted">
+      No key can change your password, two-factor, sign-in sessions, or API keys, or export or import all your data.
+      Without full access, a key also can&apos;t edit or delete anything, change settings, or send anything outside
+      this server.
+    </p>
   );
 }
 
@@ -191,19 +215,78 @@ function when(iso: string | null, fallback: string): string {
   return iso ? new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : fallback;
 }
 
+/** Change what an existing key may do. The key itself stays the same. */
+function EditAccess({ k, onDone }: { k: ApiKey; onDone: () => void }) {
+  const me = useMe();
+  const status = useAuthStatus();
+  const update = useUpdateApiKeyScopes();
+  const [scopes, setScopes] = useState<Scope[]>(k.scopes);
+  const [confirming, setConfirming] = useState(false);
+
+  async function run() {
+    try {
+      await update.mutateAsync({ id: k.id, scopes });
+      setConfirming(false);
+      onDone();
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "reauth_required") setConfirming(true);
+    }
+  }
+
+  const reauthError = update.error instanceof ApiError && update.error.code === "reauth_required";
+  return (
+    <div className="stack-sm">
+      <form
+        className="stack-sm"
+        aria-label={`Access for ${k.name}`}
+        onSubmit={(e) => {
+          e.preventDefault();
+          void run();
+        }}
+      >
+        <ScopePicker scopes={scopes} onChange={setScopes} />
+        <p className="small muted">The key stays the same, so apps already using it keep working.</p>
+        {confirming ? null : (
+          <div className="row">
+            <Button type="submit" busy={update.isPending} disabled={scopes.length === 0}>
+              Save access
+            </Button>
+            <Button type="button" variant="ghost" onClick={onDone}>
+              Cancel
+            </Button>
+          </div>
+        )}
+        {update.error && !reauthError ? <Notice>{errorMessage(update.error)}</Notice> : null}
+      </form>
+      {/* Outside the form above: nested forms make the browser submit the outer one. */}
+      {confirming && me.data && status.data ? (
+        <ConfirmIdentity
+          user={me.data}
+          status={status.data}
+          action="change what this key may do"
+          returnTo="/settings/api"
+          onConfirmed={() => void run()}
+          onCancel={() => setConfirming(false)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function KeyRow({ k }: { k: ApiKey }) {
   const revoke = useRevokeApiKey();
   const [sure, setSure] = useState(false);
-  const scopeLabels = SCOPE_INFO.filter((s) => k.scopes.includes(s.scope)).map((s) => s.label.toLowerCase());
+  const [editing, setEditing] = useState(false);
   return (
     <li className="session">
       <div className="stack-sm">
         <div>
           <strong>{k.name}</strong> <code className="small">{k.prefix}…</code>
+          {k.scopes.includes("full") ? <span className="badge badge-warn">Full access</span> : null}
           {k.expired ? <span className="badge badge-warn">Expired</span> : null}
         </div>
         <span className="muted small">
-          Can {scopeLabels.join(", ")} · created {when(k.created_at, "")} · last used {when(k.last_used_at, "never")} ·{" "}
+          {describeScopes(k.scopes)} · created {when(k.created_at, "")} · last used {when(k.last_used_at, "never")} ·{" "}
           {k.expires_at ? `${k.expired ? "expired" : "expires"} ${when(k.expires_at, "")}` : "never expires"}
         </span>
         {k.conversation_id ? (
@@ -213,9 +296,10 @@ function KeyRow({ k }: { k: ApiKey }) {
               : "See its proposed changes"}
           </Link>
         ) : null}
+        {editing ? <EditAccess k={k} onDone={() => setEditing(false)} /> : null}
         {revoke.error ? <Notice>{errorMessage(revoke.error)}</Notice> : null}
       </div>
-      {sure ? (
+      {editing ? null : sure ? (
         <div className="row">
           <Button variant="danger" busy={revoke.isPending} onClick={() => revoke.mutate(k.id)}>
             Revoke
@@ -225,9 +309,14 @@ function KeyRow({ k }: { k: ApiKey }) {
           </Button>
         </div>
       ) : (
-        <Button variant="secondary" onClick={() => setSure(true)} aria-label={`Revoke ${k.name}`}>
-          Revoke
-        </Button>
+        <div className="row">
+          <Button variant="secondary" onClick={() => setEditing(true)} aria-label={`Change access for ${k.name}`}>
+            Change access
+          </Button>
+          <Button variant="secondary" onClick={() => setSure(true)} aria-label={`Revoke ${k.name}`}>
+            Revoke
+          </Button>
+        </div>
       )}
     </li>
   );

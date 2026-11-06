@@ -40,8 +40,13 @@ class KeyAuth:
     user: User
     token: ApiToken
 
+    @property
+    def full(self) -> bool:
+        return "full" in self.token.scopes
+
     def can(self, scope: str) -> bool:
-        return scope in self.token.scopes
+        # Full access includes every narrower scope.
+        return self.full or scope in self.token.scopes
 
 
 def bearer(authorization: str | None) -> str | None:

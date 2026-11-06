@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-06
+
+### Added
+- **Full-access API keys.** A new "Full access" permission lets your AI agent run your job search for you, with no confirmations: facts and stories it adds are saved verified, reminders, stage moves, notes, saving and tracking jobs, and profile edits apply at once, and two new MCP tools, `api_reference` and `api_request`, reach the whole REST API (edit and delete anything, job sources, filters, resumes and cover letters, interview prep, AI and notification settings, backups). Full-access keys also work directly on `/api/v1/...` with `Authorization: Bearer`. Sign-in security (password, two-factor, sessions, single sign-on), API key management, and full data export/import stay out of reach of every key.
+- **Change access** on an existing key (Settings → API access), after your password. The key stays the same, so connected apps keep working.
+- REST changes made with a key are audited as `api.request` with the key's id.
+
+### Changed
+- `compose.override.yaml` is ignored by git (from 1.1.2) and the API access guide now covers Claude Desktop through `mcp-remote` and reverse proxies that require client certificates.
+
+### Upgrading
+- One database migration (0010, adds the new permission). It runs automatically.
+
 ## [1.1.2] - 2026-11-05
 
 ### Fixed

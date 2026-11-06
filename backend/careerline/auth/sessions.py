@@ -172,6 +172,10 @@ async def csrf_protect(request: Request, settings: SettingsDep, session: Optiona
     """
     if request.method in _SAFE_METHODS:
         return
+    if session is None and _key_request(request, settings) is not None:
+        # An API key in the Authorization header: no ambient browser credential to forge.
+        # require_user checks the key itself.
+        return
     header = request.headers.get(CSRF_HEADER, "")
     cookie = request.cookies.get(settings.csrf_cookie, "")
     ok = bool(header) and bool(cookie) and hmac.compare_digest(header, cookie)
@@ -194,8 +198,25 @@ async def _load_user(db: AsyncSession, session: AuthSession) -> User:
     return user
 
 
-async def require_user(db: DB, session: OptionalSession) -> Authenticated:
+def _key_request(request: Request, settings: Settings) -> str | None:
+    """The API key a request uses instead of a session, on paths keys may reach."""
+    from careerline.api_access import rest
+
+    if rest.blocked(request.url.path):
+        return None
+    return rest.key_request(request, settings.session_cookie)
+
+
+async def require_user(
+    request: Request, db: DB, settings: SettingsDep, session: OptionalSession
+) -> Authenticated:
     if session is None:
+        raw_key = _key_request(request, settings)
+        if raw_key is not None:
+            from careerline.api_access import rest
+
+            key = await rest.authenticate(db, request, raw_key)
+            return Authenticated(user=key.user, session=rest.stand_in_session(key))
         raise ApiError(401, "unauthenticated", "Please sign in.")
     if session.state != ACTIVE:
         raise ApiError(401, "mfa_required", "Enter your authentication code to finish signing in.")

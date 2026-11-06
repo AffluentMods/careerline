@@ -25,7 +25,7 @@ router = APIRouter(
 )
 
 MAX_KEYS = 20
-Scope = Literal["read", "draft", "propose"]
+Scope = Literal["read", "draft", "propose", "full"]
 
 
 class TokenIn(Strict):
@@ -138,6 +138,55 @@ async def create_token(
     await db.commit()
     await db.refresh(token)
     return CreatedTokenOut(**_out(token, 0, now).model_dump(), token=raw)
+
+
+class TokenPatch(Strict):
+    scopes: list[Scope] = Field(min_length=1, max_length=len(SCOPES))
+
+    @field_validator("scopes")
+    @classmethod
+    def _unique(cls, value: list[str]) -> list[str]:
+        return [s for s in SCOPES if s in value]
+
+
+@router.patch("/{token_id}")
+async def update_token(
+    token_id: uuid.UUID, body: TokenPatch, request: Request, auth: CurrentUser, db: DB
+) -> TokenOut:
+    """Change what an existing key may do. Like creating one, this needs the password again."""
+    require_reauth(auth)
+    uid = auth.user.id
+    token = await db.scalar(
+        select(ApiToken).where(ApiToken.user_id == uid, ApiToken.id == token_id)
+    )
+    if token is None:
+        raise ApiError(404, "not_found", "Not found.")
+    before = list(token.scopes)
+    token.scopes = list(body.scopes)
+    audit.record(
+        db,
+        request,
+        "api_token.updated",
+        uid,
+        token_id=str(token.id),
+        name=token.name,
+        scopes_before=before,
+        scopes=body.scopes,
+    )
+    await db.commit()
+    pending = 0
+    if token.conversation_id:
+        pending = int(
+            await db.scalar(
+                select(func.count()).where(
+                    PendingAction.user_id == uid,
+                    PendingAction.conversation_id == token.conversation_id,
+                    PendingAction.status == "pending",
+                )
+            )
+            or 0
+        )
+    return _out(token, pending, datetime.now(UTC))
 
 
 @router.delete("/{token_id}", status_code=204)

@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 
-export type Scope = "read" | "draft" | "propose";
+export type Scope = "read" | "draft" | "propose" | "full";
 
 export interface ApiKey {
   id: string;
@@ -45,7 +45,21 @@ export const SCOPE_INFO: { scope: Scope; label: string; hint: string }[] = [
     label: "Propose changes",
     hint: "Reminders, stage moves, notes, tracking jobs, profile edits. Each waits for your Confirm.",
   },
+  {
+    scope: "full",
+    label: "Full access",
+    hint:
+      "Everything above and more, with no confirmations: facts it adds count as verified, and it can edit or " +
+      "delete anything, manage job sources, write materials, and change AI and notification settings.",
+  },
 ];
+
+/** "Full access", or the list of what a narrower key may do. */
+export function describeScopes(scopes: Scope[]): string {
+  if (scopes.includes("full")) return "Full access";
+  const labels = SCOPE_INFO.filter((s) => scopes.includes(s.scope)).map((s) => s.label.toLowerCase());
+  return `Can ${labels.join(", ")}`;
+}
 
 export const EXPIRY_OPTIONS: { value: string; label: string }[] = [
   { value: "7", label: "7 days" },
@@ -88,6 +102,15 @@ export function useCreateApiKey() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: NewKeyInput) => api<CreatedApiKey>("/api-tokens", { method: "POST", body }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: apiKeyKeys.all }),
+  });
+}
+
+export function useUpdateApiKeyScopes() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, scopes }: { id: string; scopes: Scope[] }) =>
+      api<ApiKey>(`/api-tokens/${id}`, { method: "PATCH", body: { scopes } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: apiKeyKeys.all }),
   });
 }

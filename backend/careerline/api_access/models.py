@@ -10,8 +10,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from careerline.db import Base, UUIDPk
 
-# What a key may do. Nothing else (account, security, export, settings) is reachable with one.
-SCOPES = ("read", "draft", "propose")
+# What a key may do. "full" includes the others and also unlocks the REST API (see
+# careerline.api_access.rest); sign-in security, keys, and data export/import stay out of reach.
+SCOPES = ("read", "draft", "propose", "full")
 
 
 class ApiToken(UUIDPk, Base):
