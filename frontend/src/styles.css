@@ -2245,3 +2245,214 @@ code {
     padding-left: 0;
   }
 }
+
+/* ---- Today page -------------------------------------------------------- */
+.setup-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.setup-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+}
+.setup-steps li:first-child {
+  border-top: 0;
+}
+.setup-mark {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.setup-done .setup-mark {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.setup-done strong {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.setup-text {
+  flex: 1;
+  min-width: 0;
+}
+.setup-text p {
+  margin: 0.15rem 0 0;
+}
+.match-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+.match {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.4rem;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-decoration: none;
+}
+.match:hover,
+.match:focus-visible {
+  background: var(--surface-2);
+}
+.match .score {
+  width: 36px;
+  height: 36px;
+  font-size: 0.85rem;
+}
+.match-text {
+  display: grid;
+  min-width: 0;
+}
+.match-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Sources picker ------------------------------------------------------ */
+.source-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+.source-card {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  text-align: left;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.source-card:hover,
+.source-card:focus-visible {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+.source-card .badge {
+  justify-self: start;
+}
+.source-card-title {
+  font-weight: 600;
+}
+.how-to {
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-sm);
+  background: var(--info-soft);
+  margin-bottom: 0.75rem;
+}
+.how-to ol {
+  margin: 0.35rem 0 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+/* ---- Materials: review and ATS check ------------------------------------- */
+.review-changes summary {
+  cursor: pointer;
+}
+.review-changes ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+.ats-checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+.ats-checks li > span:first-child {
+  display: inline-grid;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-right: 0.35rem;
+}
+.ats-ok > span:first-child {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+.ats-bad > span:first-child {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+
+/* ---- Guide --------------------------------------------------------------- */
+.guide-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin-bottom: 1rem;
+}
+.guide {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+.guide-step {
+  display: grid;
+  gap: 0.75rem;
+  scroll-margin-top: 1rem;
+}
+.guide-step h2 {
+  margin: 0;
+}
+.guide-body {
+  display: grid;
+  gap: 1rem;
+}
+.guide-points {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.4rem;
+}
+.guide-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+@media (min-width: 960px) {
+  .guide-body {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: start;
+  }
+}

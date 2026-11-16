@@ -157,7 +157,11 @@ _PARA = ParagraphStyle("para", parent=_BASE, spaceAfter=8)
 
 
 def _t(text: str) -> str:
-    return escape(text or "")
+    # "•" typed into text has the same extraction problem as the list bullet (see _bullets).
+    return escape((text or "").replace(BULLET, DASH))
+
+
+BULLET, DASH = "\N{BULLET}", "\N{EN DASH}"
 
 
 def _pdf(flow: list[Any], title: str) -> bytes:
@@ -188,10 +192,14 @@ def _pdf_header(h: Header) -> list[Any]:
 
 
 def _bullets(items: list[dict[str, Any]]) -> ListFlowable:
+    # An en dash, not "•": with the built-in PDF fonts the bullet character is encoded as
+    # code 127, which text extractors (and so applicant tracking systems) read as a
+    # control character. The dash comes through as text.
     return ListFlowable(
         [ListItem(Paragraph(_t(b["text"]), _BASE), leftIndent=12) for b in items],
         bulletType="bullet",
-        start="•",
+        start=DASH,
+        bulletFontName="Helvetica",
         leftIndent=12,
     )
 

@@ -8,10 +8,14 @@ export interface FieldSpec {
   label: string;
   required?: boolean;
   hint?: string;
-  type?: "text" | "number" | "checkbox" | "select";
+  type?: "text" | "number" | "checkbox" | "select" | "multiselect";
   options?: string[];
   secret?: boolean;
+  /** Prefilled for a new source. */
+  default?: string | number | boolean;
 }
+
+export type AdapterGroup = "inbox" | "search" | "remote" | "company" | "community";
 
 export interface Adapter {
   kind: string;
@@ -20,7 +24,22 @@ export interface Adapter {
   terms_url: string;
   config_fields: FieldSpec[];
   secret_fields: FieldSpec[];
+  group: AdapterGroup;
+  min_interval_hours: number;
+  how_to: string;
 }
+
+export const ADAPTER_GROUPS: { group: AdapterGroup; title: string; blurb: string }[] = [
+  {
+    group: "inbox",
+    title: "LinkedIn, Indeed & co. (via your alert emails)",
+    blurb: "The big sites don't allow scraping, but they email you matching jobs. CareerLine reads those emails.",
+  },
+  { group: "search", title: "Job search engines", blurb: "Keyword and location search across many sites." },
+  { group: "remote", title: "Remote job boards", blurb: "Remote-only boards, filtered by your keywords. No key needed." },
+  { group: "company", title: "Specific companies", blurb: "Every opening at a company you want to work for. No key needed." },
+  { group: "community", title: "Community", blurb: "Jobs posted directly by founders and hiring managers." },
+];
 
 export interface Source {
   id: string;

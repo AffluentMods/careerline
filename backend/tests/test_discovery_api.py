@@ -69,7 +69,8 @@ async def test_sources_fetch_dedupe_and_track(
     c = user_client
     web = FakeWeb()
     kinds = [a["kind"] for a in (await c.get(f"{D}/adapters")).json()]
-    assert kinds == ["greenhouse", "lever", "ashby", "adzuna", "usajobs", "jsearch", "rss"]
+    assert kinds[:7] == ["greenhouse", "lever", "ashby", "adzuna", "usajobs", "jsearch", "rss"]
+    assert {"email_alerts", "workable", "remotive", "hn_hiring"} <= set(kinds)
 
     gh = await _source(c, NORTHWIND_GH)
     assert gh["pending"] is True and gh["last_status"] == "never" and gh["has_secret"] is False

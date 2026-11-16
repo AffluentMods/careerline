@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import uuid
 from datetime import UTC, datetime
 from typing import Any, Literal
@@ -19,11 +20,11 @@ from careerline.ai.facts import FactSet, load_facts
 from careerline.ai.jobs import allow_private_for
 from careerline.ai.prompting import untrusted
 from careerline.ai.providers import AiError
-from careerline.ai.service import client_for, model_for, structured, to_api_error
+from careerline.ai.service import AiClient, client_for, model_for, structured, to_api_error
 from careerline.auth.sessions import DB, CipherDep, CurrentUser, SettingsDep, csrf_protect
 from careerline.discovery.models import JobPosting
 from careerline.errors import ApiError
-from careerline.materials import build, export
+from careerline.materials import ats, build, export
 from careerline.materials.models import Document
 from careerline.models import VaultEntry, VaultProfile
 from careerline.security import contexts
@@ -42,6 +43,8 @@ class GenerateIn(Strict):
     method: Literal["rules", "ai"] = "rules"
     posting_id: uuid.UUID | None = None
     application_id: uuid.UUID | None = None
+    # AI drafts get a second, independent review pass that tightens the wording.
+    review: bool = True
 
     @model_validator(mode="after")
     def _one_target(self) -> GenerateIn:
@@ -147,6 +150,45 @@ def _target_block(t: build.Target) -> str:
     return untrusted("job_posting", f"Title: {t.title}\nCompany: {t.company}\n\n{t.description}")
 
 
+async def _review(
+    ai: AiClient,
+    factset: FactSet,
+    profile_summary: str,
+    target: build.Target,
+    kind: str,
+    content: dict[str, Any],
+    subject: dict[str, Any],
+) -> None:
+    """Run the reviewer on a draft and apply what passes the fact check, in place."""
+    draft = build.draft_for_review(kind, content)
+    if not draft:
+        return
+    try:
+        out = await structured(
+            ai,
+            feature="review",
+            prompt_name="review_draft",
+            values={
+                "kind": "resume" if kind == "resume" else "cover letter",
+                "facts": factset.prompt_json(),
+                "draft": json.dumps(draft, ensure_ascii=False),
+                "posting": _target_block(target),
+            },
+            schema_model=build.ReviewOut,
+            max_tokens=6000,
+            effort="medium",
+            subject=subject,
+        )
+    except AiError as exc:
+        # The draft is still usable without a review; say why there isn't one.
+        content["review"] = {"error": exc.message}
+        return
+    known = build.known_facts(factset, profile_summary)
+    content["review"] = build.apply_review(
+        kind, content, known, out, model_for(ai.settings, "review")
+    )
+
+
 async def _out(
     db: AsyncSession, uid: uuid.UUID, doc: Document, factset: FactSet | None = None
 ) -> DocOut:
@@ -239,6 +281,8 @@ async def generate(
                     subject=subject,
                 )
                 content = build.build_letter_from_ai(factset, target, letter)
+            if body.review:
+                await _review(ai, factset, profile_summary, target, body.kind, content, subject)
         elif body.kind == "resume":
             content = build.build_resume_rules(factset, profile_summary, target)
         else:
@@ -365,6 +409,79 @@ async def delete_document(doc_id: uuid.UUID, auth: CurrentUser, db: DB) -> Respo
     return Response(status_code=204)
 
 
+async def _doc_target(db: AsyncSession, uid: uuid.UUID, doc: Document) -> build.Target | None:
+    """The job a document was written for, if it still exists."""
+    if doc.posting_id:
+        p = await db.scalar(
+            select(JobPosting).where(JobPosting.user_id == uid, JobPosting.id == doc.posting_id)
+        )
+        if p is not None:
+            return build.Target(p.title, p.company, p.description)
+    if doc.application_id:
+        a = await db.scalar(
+            select(Application).where(
+                Application.user_id == uid, Application.id == doc.application_id
+            )
+        )
+        if a is not None:
+            return build.Target(a.title, a.company, a.description)
+    return None
+
+
+@router.post("/documents/{doc_id}/review")
+async def review_document(
+    doc_id: uuid.UUID,
+    request: Request,
+    auth: CurrentUser,
+    db: DB,
+    cipher: CipherDep,
+    settings: SettingsDep,
+) -> DocOut:
+    """Get a second opinion on any document written for a job, and apply what checks out."""
+    uid = auth.user.id
+    doc = await _get(db, uid, doc_id)
+    target = await _doc_target(db, uid, doc)
+    if target is None:
+        raise ApiError(
+            422, "target_required", "A review needs the job the document was written for."
+        )
+    factset = await load_facts(db, uid)
+    try:
+        ai = await client_for(
+            db,
+            uid,
+            cipher,
+            allow_private=await allow_private_for(db, uid, settings.outbound_allow_private),
+        )
+    except AiError as exc:
+        raise to_api_error(exc) from None
+    content = copy.deepcopy(doc.content)
+    await _review(
+        ai,
+        factset,
+        await _profile_summary(db, uid),
+        target,
+        doc.kind,
+        content,
+        {"document_id": str(doc.id)},
+    )
+    if "error" in content.get("review", {}):
+        raise ApiError(502, "review_failed", content["review"]["error"])
+    doc.content = content
+    flag_modified(doc, "content")
+    audit.record(
+        db,
+        request,
+        "document.reviewed",
+        uid,
+        document_id=str(doc.id),
+        changes=len(content["review"]["changes"]),
+    )
+    await db.commit()
+    await db.refresh(doc)
+    return await _out(db, uid, doc, factset)
+
+
 @router.get("/documents/{doc_id}/diff")
 async def diff(doc_id: uuid.UUID, auth: CurrentUser, db: DB) -> dict[str, Any]:
     """Compare a resume with the master resume built from the vault right now."""
@@ -416,9 +533,11 @@ async def _render(
     display_name: str,
     doc: Document,
     fmt: str,
+    *,
+    require_clean: bool = True,
 ) -> tuple[bytes, str, str]:
     flagged = build.flagged_count(doc.kind, doc.content)
-    if flagged:
+    if flagged and require_clean:
         raise ApiError(
             409,
             "unverified_content",
@@ -461,6 +580,38 @@ async def export_document(
     return Response(
         data, media_type=mime, headers={"Content-Disposition": content_disposition(name)}
     )
+
+
+@router.get("/documents/{doc_id}/ats-check")
+async def ats_check(
+    doc_id: uuid.UUID,
+    auth: CurrentUser,
+    db: DB,
+    cipher: CipherDep,
+    format: Literal["docx", "pdf"] = Query(default="pdf"),
+) -> dict[str, Any]:
+    """Read the exported file the way screening software does, and check what it sees."""
+    uid = auth.user.id
+    doc = await _get(db, uid, doc_id)
+    data, _, _ = await _render(
+        db, uid, cipher, auth.user.display_name, doc, format, require_clean=False
+    )
+    header = await _header(db, uid, cipher, auth.user.display_name)
+    target = await _doc_target(db, uid, doc)
+    factset = await load_facts(db, uid)
+    result = ats.check(
+        data=data,
+        fmt=format,
+        kind=doc.kind,
+        name=header.name,
+        contact=header.contact,
+        target_title=target.title if target else "",
+        target_description=target.description if target else "",
+        skill_names=[f.data.get("name", "") for f in factset.facts if f.kind == "skill"],
+        vault_text=" ".join(f.text for f in factset.facts),
+    )
+    result["flagged"] = build.flagged_count(doc.kind, doc.content)
+    return result
 
 
 @router.post("/documents/{doc_id}/attach", status_code=201)

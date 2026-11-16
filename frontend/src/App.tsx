@@ -4,6 +4,7 @@ import { AppShell } from "./components/AppShell";
 import { FullPageLoader } from "./components/ui";
 import { useAuthStatus, useMe } from "./lib/auth";
 import { AssistantPage } from "./pages/assistant/AssistantPage";
+import { GuidePage } from "./pages/GuidePage";
 import { InsightsPage } from "./pages/insights/InsightsPage";
 import { InterviewHomePage, MockPage, PrepPage } from "./pages/interview/InterviewPages";
 import { JobsPage } from "./pages/jobs/JobsPage";
@@ -65,6 +66,7 @@ export function App() {
         <Route path="assistant" element={<AssistantPage />} />
         <Route path="assistant/:id" element={<AssistantPage />} />
         <Route path="insights" element={<InsightsPage />} />
+        <Route path="guide" element={<GuidePage />} />
         <Route path="settings" element={<Navigate to="/settings/security" replace />} />
         <Route path="settings/security" element={<SecurityPage />} />
         <Route path="settings/ai" element={<AiSettingsPage />} />

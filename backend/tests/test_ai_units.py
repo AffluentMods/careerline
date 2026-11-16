@@ -57,9 +57,11 @@ def test_every_prompt_loads_renders_and_carries_the_rules() -> None:
         "connection_test",
         "cover_letter",
         "fit_score",
+        "follow_up",
         "interview_questions",
         "mock_interview",
         "resume_tailor",
+        "review_draft",
     ]
     for name in names:
         t = load_prompt(name)

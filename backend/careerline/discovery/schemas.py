@@ -9,7 +9,26 @@ from pydantic import BaseModel, Field, StringConstraints
 
 from careerline.vault.schemas import Short, Strict, Url
 
-SourceKind = Literal["greenhouse", "lever", "ashby", "adzuna", "usajobs", "jsearch", "rss"]
+SourceKind = Literal[
+    "greenhouse",
+    "lever",
+    "ashby",
+    "workable",
+    "smartrecruiters",
+    "recruitee",
+    "personio",
+    "adzuna",
+    "usajobs",
+    "jsearch",
+    "rss",
+    "remotive",
+    "remoteok",
+    "himalayas",
+    "jobicy",
+    "arbeitnow",
+    "hn_hiring",
+    "email_alerts",
+]
 Shift = Literal["day", "early", "evening", "night", "weekend", "rotating", "on_call"]
 Clearance = Literal["none", "public_trust", "secret", "top_secret"]
 SourceName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
@@ -62,6 +81,9 @@ class AdapterOut(BaseModel):
     terms_url: str
     config_fields: list[dict[str, Any]]
     secret_fields: list[dict[str, Any]]
+    group: str
+    min_interval_hours: int
+    how_to: str
 
 
 class FilterOut(BaseModel):

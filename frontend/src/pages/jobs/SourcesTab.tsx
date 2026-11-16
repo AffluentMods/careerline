@@ -2,9 +2,17 @@
 import { useState, type FormEvent } from "react";
 import { Button, Checkbox, Field, FullPageLoader, Notice, SelectField } from "../../components/ui";
 import { errorMessage, fieldErrors } from "../../lib/api";
-import { useAdapters, useDiscoveryMutations, useSources, type Adapter, type FieldSpec, type Source } from "../../lib/discovery";
+import {
+  ADAPTER_GROUPS,
+  useAdapters,
+  useDiscoveryMutations,
+  useSources,
+  type Adapter,
+  type FieldSpec,
+  type Source,
+} from "../../lib/discovery";
 
-type Values = Record<string, string | boolean>;
+type Values = Record<string, string | boolean | string[]>;
 
 /** Form values -> config/secret objects (numbers parsed, blanks left out). */
 export function toPayload(fields: FieldSpec[], values: Values): Record<string, unknown> {
@@ -13,6 +21,8 @@ export function toPayload(fields: FieldSpec[], values: Values): Record<string, u
     const v = values[f.name];
     if (f.type === "checkbox") {
       out[f.name] = Boolean(v);
+    } else if (f.type === "multiselect") {
+      if (Array.isArray(v) && v.length) out[f.name] = v;
     } else if (typeof v === "string" && v.trim() !== "") {
       out[f.name] = f.type === "number" ? Number(v) : v.trim();
     }
@@ -23,11 +33,20 @@ export function toPayload(fields: FieldSpec[], values: Values): Record<string, u
 function fromConfig(fields: FieldSpec[], config: Record<string, unknown>): Values {
   const out: Values = {};
   for (const f of fields) {
-    const v = config[f.name];
-    out[f.name] = f.type === "checkbox" ? Boolean(v) : v === undefined || v === null ? "" : String(v);
+    const v = config[f.name] ?? f.default;
+    if (f.type === "multiselect") out[f.name] = Array.isArray(v) ? v.map(String) : [...(f.options ?? [])];
+    else out[f.name] = f.type === "checkbox" ? Boolean(v) : v === undefined || v === null ? "" : String(v);
   }
   return out;
 }
+
+const SITE_LABEL: Record<string, string> = {
+  linkedin: "LinkedIn",
+  indeed: "Indeed",
+  glassdoor: "Glassdoor",
+  ziprecruiter: "ZipRecruiter",
+  monster: "Monster",
+};
 
 function SpecFields({
   fields,
@@ -38,13 +57,29 @@ function SpecFields({
 }: {
   fields: FieldSpec[];
   values: Values;
-  onChange: (name: string, value: string | boolean) => void;
+  onChange: (name: string, value: string | boolean | string[]) => void;
   errors: Record<string, string>;
   keepSecretHint?: boolean;
 }) {
   return (
     <>
       {fields.map((f) => {
+        if (f.type === "multiselect") {
+          const chosen = Array.isArray(values[f.name]) ? (values[f.name] as string[]) : [];
+          return (
+            <fieldset key={f.name} className="check-group">
+              <legend>{f.label}</legend>
+              {(f.options ?? []).map((o) => (
+                <Checkbox
+                  key={o}
+                  label={SITE_LABEL[o] ?? o}
+                  checked={chosen.includes(o)}
+                  onChange={(e) => onChange(f.name, e.target.checked ? [...chosen, o] : chosen.filter((x) => x !== o))}
+                />
+              ))}
+            </fieldset>
+          );
+        }
         if (f.type === "checkbox") {
           return (
             <Checkbox
@@ -86,7 +121,8 @@ function SpecFields({
 function SourceForm({ adapter, source, onDone }: { adapter: Adapter; source?: Source; onDone: () => void }) {
   const m = useDiscoveryMutations();
   const [name, setName] = useState(source?.name ?? adapter.label);
-  const [interval, setInterval] = useState(String(source?.interval_hours ?? 12));
+  const [interval, setInterval] = useState(String(source?.interval_hours ?? Math.max(12, adapter.min_interval_hours)));
+  const intervals = [1, 3, 6, 12, 24, 48, 168].filter((h) => h >= adapter.min_interval_hours);
   const [config, setConfig] = useState<Values>(() => fromConfig(adapter.config_fields, source?.config ?? {}));
   const [secret, setSecret] = useState<Values>({});
   const [error, setError] = useState<unknown>(null);
@@ -119,12 +155,25 @@ function SourceForm({ adapter, source, onDone }: { adapter: Adapter; source?: So
           Terms and docs
         </a>
       </p>
+      {adapter.how_to ? (
+        <div className="how-to">
+          <strong className="small">How to set it up</strong>
+          <ol className="small">
+            {adapter.how_to
+              .split(/\s*\d\.\s+/)
+              .filter(Boolean)
+              .map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+          </ol>
+        </div>
+      ) : null}
       <div className="form-grid">
         <Field label="Name" required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} />
         <SelectField
           label="Check every"
           value={interval}
-          options={[1, 3, 6, 12, 24, 48, 168].map((h) => ({ value: String(h), label: h < 24 ? `${h} hours` : h === 168 ? "week" : `${h / 24} days` }))}
+          options={intervals.map((h) => ({ value: String(h), label: h < 24 ? `${h} hours` : h === 168 ? "week" : `${h / 24} days` }))}
           onChange={(e) => setInterval(e.target.value)}
         />
         <SpecFields
@@ -227,6 +276,8 @@ export function SourcesTab() {
   const sources = useSources();
   const adapters = useAdapters();
   const [adding, setAdding] = useState<string>("");
+  // null until the user chooses: the picker opens by itself while there are no sources.
+  const [picking, setPicking] = useState<boolean | null>(null);
   if (sources.isPending || adapters.isPending) return <FullPageLoader />;
   if (sources.isError) return <Notice>{errorMessage(sources.error)}</Notice>;
   if (adapters.isError) return <Notice>{errorMessage(adapters.error)}</Notice>;
@@ -235,37 +286,81 @@ export function SourcesTab() {
 
   return (
     <section className="stack" aria-label="Sources">
-      <p className="muted small">
-        Each source uses an official API or a public feed and runs in the background on its schedule. CareerLine never scrapes sites
-        that don&apos;t allow it.
-      </p>
-      {chosen ? (
-        <div className="card">
-          <h2>New source: {chosen.label}</h2>
-          <SourceForm adapter={chosen} onDone={() => setAdding("")} />
-        </div>
-      ) : (
-        <div className="filters">
-          <SelectField
-            label="Add a source"
-            value=""
-            placeholder="Choose a source type…"
-            options={adapters.data.map((a) => ({ value: a.kind, label: a.label }))}
-            onChange={(e) => setAdding(e.target.value)}
-          />
-        </div>
-      )}
-      {sources.data.length === 0 ? (
-        <div className="empty">
-          <p>No sources yet. Company boards (Greenhouse, Lever, Ashby) need no key; search APIs need a free key.</p>
-        </div>
-      ) : (
-        <ul className="entry-list">
+      {sources.data.length ? (
+        <ul className="entry-list" aria-label="Your sources">
           {sources.data.map((s) => (
             <SourceRow key={s.id} source={s} adapter={byKind.get(s.kind)} />
           ))}
         </ul>
+      ) : null}
+      {chosen ? (
+        <div className="card">
+          <h2>New source: {chosen.label}</h2>
+          <SourceForm
+            adapter={chosen}
+            onDone={() => {
+              setAdding("");
+              setPicking(false);
+            }}
+          />
+        </div>
+      ) : (picking ?? sources.data.length === 0) ? (
+        <SourcePicker adapters={adapters.data} onPick={setAdding} onCancel={sources.data.length ? () => setPicking(false) : undefined} />
+      ) : (
+        <div>
+          <Button onClick={() => setPicking(true)}>Add a source</Button>
+        </div>
       )}
+      <p className="muted small">
+        Sources run in the background on their schedule, using each site&apos;s official API, public feed, or the alert emails it
+        sends you. CareerLine never scrapes sites that forbid it.
+      </p>
     </section>
+  );
+}
+
+function SourcePicker({
+  adapters,
+  onPick,
+  onCancel,
+}: {
+  adapters: Adapter[];
+  onPick: (kind: string) => void;
+  onCancel?: () => void;
+}) {
+  return (
+    <div className="stack">
+      <div className="row-between">
+        <h2>Where should CareerLine look for jobs?</h2>
+        {onCancel ? (
+          <Button variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+        ) : null}
+      </div>
+      {ADAPTER_GROUPS.map((g) => {
+        const items = adapters.filter((a) => a.group === g.group);
+        if (!items.length) return null;
+        return (
+          <section key={g.group} aria-label={g.title} className="stack-sm">
+            <div>
+              <h3>{g.title}</h3>
+              <p className="muted small">{g.blurb}</p>
+            </div>
+            <ul className="source-grid">
+              {items.map((a) => (
+                <li key={a.kind}>
+                  <button type="button" className="source-card" onClick={() => onPick(a.kind)}>
+                    <span className="source-card-title">{a.label}</span>
+                    <span className="muted small">{a.description}</span>
+                    <span className="badge">{a.secret_fields.length ? (a.group === "inbox" ? "Needs an app password" : "Needs a free key") : "No key needed"}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
   );
 }

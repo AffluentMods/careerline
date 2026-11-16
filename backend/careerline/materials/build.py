@@ -106,7 +106,20 @@ def _children(facts: list[Fact], parent_id: str) -> list[Fact]:
 
 
 def _line(f: Fact) -> str:
-    return f.text
+    """A fact as a resume bullet: the user's own words, with its metric worked in naturally
+    (``fact_text``'s "[metric: ...]" is for prompts, not for the page)."""
+    if f.kind not in ("achievement", "responsibility"):
+        return f.text
+    text = str(f.data.get("text", "")).strip().rstrip(".")
+    metric = f.data.get("metric")
+    if isinstance(metric, dict) and metric.get("value"):
+        value = str(metric["value"]).strip()
+        if value and value not in text:
+            detail = " ".join(
+                str(x).strip() for x in (value, metric.get("unit"), metric.get("context")) if x
+            )
+            text = f"{text} ({detail})"
+    return text or f.text
 
 
 def resume_skeleton(
@@ -301,7 +314,7 @@ def build_letter_rules(factset: FactSet, target: Target) -> dict[str, Any]:
             )
         )
     if wins:
-        text = "A few results I'm proud of: " + " ".join(w.text.rstrip(".") + "." for w in wins)
+        text = "A few results I'm proud of: " + " ".join(_line(w).rstrip(".") + "." for w in wins)
         paragraphs.append(item(text, [w.id for w in wins], known))
     if skills:
         names = ", ".join(s.data.get("name", "") for s in skills)
@@ -337,6 +350,111 @@ def build_letter_from_ai(factset: FactSet, target: Target, out: LetterOut) -> di
         if p.text.strip()
     ]
     return {"company": target.company, "role": target.title, "paragraphs": paragraphs}
+
+
+# --- second-opinion review -------------------------------------------------------------------
+
+
+class RevisionOut(BaseModel):
+    item_id: str
+    text: str = Field(max_length=2000)
+    fact_ids: list[str]
+    why: str = Field(max_length=300)
+
+
+class MissingOut(BaseModel):
+    requirement: str = Field(max_length=200)
+    supported: bool
+
+
+class ReviewOut(BaseModel):
+    summary: str = Field(max_length=1500)
+    revisions: list[RevisionOut]
+    missing: list[MissingOut]
+
+
+def draft_for_review(kind: str, content: dict[str, Any]) -> list[dict[str, Any]]:
+    """The draft as the reviewer sees it: every rewritable item with its id and citations."""
+    out = []
+    if kind == "cover_letter":
+        for p in content.get("paragraphs", []):
+            out.append(
+                {
+                    "item_id": p["id"],
+                    "section": "paragraph",
+                    "text": p["text"],
+                    "fact_ids": p.get("fact_ids", []),
+                }
+            )
+        return out
+    if content.get("summary"):
+        s = content["summary"]
+        out.append(
+            {
+                "item_id": s["id"],
+                "section": "summary",
+                "text": s["text"],
+                "fact_ids": s.get("fact_ids", []),
+            }
+        )
+    for section in ("experience", "projects"):
+        for entry in content.get(section, []):
+            heading = " - ".join(
+                x
+                for x in (entry.get("title") or entry.get("name", ""), entry.get("employer", ""))
+                if x
+            )
+            for b in entry.get("bullets", []):
+                out.append(
+                    {
+                        "item_id": b["id"],
+                        "section": heading,
+                        "text": b["text"],
+                        "fact_ids": b.get("fact_ids", []),
+                    }
+                )
+    return out
+
+
+def apply_review(
+    kind: str,
+    content: dict[str, Any],
+    known: dict[str, Fact],
+    out: ReviewOut,
+    model: str,
+) -> dict[str, Any]:
+    """Apply a reviewer's revisions that pass the fact check; record the rest as notes.
+
+    Items the user approved or wrote are never touched. Returns the review record that is
+    stored on the document."""
+    by_id = {i["id"]: i for i in all_items(kind, content)}
+    changes: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
+    for rev in out.revisions[:40]:
+        target = by_id.get(rev.item_id)
+        text = re.sub(r"\s+", " ", rev.text).strip()
+        if target is None or not text or text == target["text"]:
+            continue
+        if target.get("status") == APPROVED:
+            continue
+        status, reason = check(text, rev.fact_ids, known, allow_uncited=kind == "cover_letter")
+        if status != LINKED:
+            rejected.append(
+                {"item_id": rev.item_id, "text": text, "why": rev.why, "reason": reason}
+            )
+            continue
+        changes.append(
+            {"item_id": rev.item_id, "before": target["text"], "after": text, "why": rev.why}
+        )
+        target["text"], target["fact_ids"] = text, rev.fact_ids
+        target["status"], target["reason"] = LINKED, ""
+    return {
+        "model": model,
+        "summary": out.summary.strip(),
+        "changes": changes,
+        "discarded": rejected,
+        "missing": [m.model_dump() for m in out.missing[:8]],
+    }
 
 
 # --- review helpers --------------------------------------------------------------------------

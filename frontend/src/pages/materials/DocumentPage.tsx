@@ -7,6 +7,7 @@ import {
   docItems,
   exportUrl,
   isResume,
+  useAtsCheck,
   useDiff,
   useDocument,
   useMaterialsMutations,
@@ -224,6 +225,126 @@ function DiffCard({ doc }: { doc: DocDetail }) {
   );
 }
 
+function ReviewCard({ doc }: { doc: DocDetail }) {
+  const m = useMaterialsMutations();
+  const review = doc.content.review;
+  const hasJob = Boolean(doc.posting_id || doc.application_id);
+  if (!hasJob) return null;
+  const changes = review?.changes ?? [];
+  const missing = review?.missing ?? [];
+  const canAdd = missing.filter((x) => x.supported);
+  const gaps = missing.filter((x) => !x.supported);
+  return (
+    <Card
+      title="Second opinion"
+      description="A separate AI pass reads it like a recruiter would and tightens weak lines. Rewrites that don't match your facts are thrown away."
+    >
+      {review?.error ? <Notice tone="info">The review didn&apos;t run: {review.error}</Notice> : null}
+      {review?.summary ? <p>{review.summary}</p> : null}
+      {review && !review.error ? (
+        <p className="muted small">
+          {changes.length ? `${changes.length} line${changes.length === 1 ? "" : "s"} improved` : "No lines needed changing"}
+          {review.discarded?.length ? `; ${review.discarded.length} suggestion${review.discarded.length === 1 ? "" : "s"} rejected for adding things your facts don't say` : ""}.
+        </p>
+      ) : null}
+      {changes.length ? (
+        <details className="review-changes">
+          <summary className="small">What changed</summary>
+          <ul className="stack-sm">
+            {changes.map((c) => (
+              <li key={c.item_id} className="small">
+                <span className="diff-removed">{c.before}</span>
+                <br />
+                <span className="diff-added">{c.after}</span>
+                {c.why ? <span className="muted"> ({c.why})</span> : null}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+      {canAdd.length ? (
+        <p className="small">
+          <strong>The job asks for, and your facts support:</strong> {canAdd.map((x) => x.requirement).join(", ")}. Consider
+          making these visible.
+        </p>
+      ) : null}
+      {gaps.length ? (
+        <p className="small">
+          <strong>Real gaps</strong> (not in your facts, so not added): {gaps.map((x) => x.requirement).join(", ")}.
+        </p>
+      ) : null}
+      {m.review.error ? <Notice>{errorMessage(m.review.error)}</Notice> : null}
+      <div>
+        <Button variant="secondary" busy={m.review.isPending} onClick={() => m.review.mutate(doc.id)}>
+          {review && !review.error ? "Review again" : "Get a second opinion"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function AtsCard({ doc, format }: { doc: DocDetail; format: "pdf" | "docx" }) {
+  const [run, setRun] = useState(false);
+  const check = useAtsCheck(doc.id, format, run);
+  const [showText, setShowText] = useState(false);
+  const r = check.data;
+  return (
+    <Card
+      title="Applicant tracking check"
+      description="Reads your exported file the way screening software does: just the text."
+    >
+      {!run ? (
+        <div>
+          <Button variant="secondary" onClick={() => setRun(true)}>
+            Check the {format === "pdf" ? "PDF" : "Word file"}
+          </Button>
+        </div>
+      ) : null}
+      {check.isFetching ? <p className="muted small">Reading the file…</p> : null}
+      {check.isError ? <Notice>{errorMessage(check.error)}</Notice> : null}
+      {r ? (
+        <div className="stack-sm">
+          <ul className="ats-checks">
+            {r.checks.map((c) => (
+              <li key={c.id} className={c.ok ? "ats-ok" : "ats-bad"}>
+                <span aria-hidden="true">{c.ok ? "✓" : "!"}</span> {c.label}
+                {c.detail ? <span className="muted small"> — {c.detail}</span> : null}
+              </li>
+            ))}
+          </ul>
+          {r.keywords ? (
+            <div className="stack-sm">
+              <p>
+                <strong>Keyword match: {r.keywords.score ?? 0}%</strong>{" "}
+                <span className="muted small">
+                  ({r.keywords.covered.length} of {r.keywords.total} terms from the posting)
+                </span>
+              </p>
+              {r.keywords.could_add.length ? (
+                <p className="small">
+                  <strong>In your vault but not on this page:</strong> {r.keywords.could_add.join(", ")}
+                </p>
+              ) : null}
+              {r.keywords.gaps.length ? (
+                <p className="small muted">
+                  <strong>Not in your facts</strong> (don&apos;t add unless true): {r.keywords.gaps.join(", ")}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+          <button className="link-btn small" aria-expanded={showText} onClick={() => setShowText(!showText)}>
+            {showText ? "Hide" : "Show"} what the software reads
+          </button>
+          {showText ? <pre className="diff">{r.text}</pre> : null}
+          {r.flagged ? (
+            <p className="muted small">Checked with {r.flagged} flagged line(s) included; review them before sending.</p>
+          ) : null}
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
 function DocumentView({ doc }: { doc: DocDetail }) {
   const m = useMaterialsMutations();
   const navigate = useNavigate();
@@ -241,8 +362,8 @@ function DocumentView({ doc }: { doc: DocDetail }) {
         <div className="page-head">
           <h1>{doc.title}</h1>
           <p className="muted">
-            {doc.method === "ai" ? `Written with ${doc.model}` : "Built from templates"} from {items.length} item
-            {items.length === 1 ? "" : "s"}, each linked to your verified facts.
+            {doc.method === "ai" ? `Written by ${doc.model}` : "Built straight from your vault"}: {items.length} line
+            {items.length === 1 ? "" : "s"}, each traced to your verified facts.
           </p>
         </div>
       </header>
@@ -297,6 +418,8 @@ function DocumentView({ doc }: { doc: DocDetail }) {
             ) : null}
             {m.attach.error ? <Notice>{errorMessage(m.attach.error)}</Notice> : null}
           </Card>
+          <AtsCard key={format} doc={doc} format={format} />
+          <ReviewCard doc={doc} />
           {doc.kind === "resume" && !doc.is_master ? <DiffCard doc={doc} /> : null}
           {doc.posting_id ? (
             <Card title="Job">

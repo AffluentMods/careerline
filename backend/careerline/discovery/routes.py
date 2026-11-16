@@ -163,6 +163,9 @@ async def list_adapters(_: CurrentUser) -> list[AdapterOut]:
             terms_url=a.terms_url,
             config_fields=a.config_fields,
             secret_fields=a.secret_fields,
+            group=a.group,
+            min_interval_hours=a.min_interval_hours,
+            how_to=a.how_to,
         )
         for a in ADAPTERS.values()
     ]
@@ -192,7 +195,8 @@ async def create_source(
         kind=body.kind,
         name=body.name,
         enabled=body.enabled,
-        interval_hours=body.interval_hours,
+        # Some providers ask to be checked only a few times a day.
+        interval_hours=max(body.interval_hours, info.min_interval_hours),
         config=config,
         next_run_at=utcnow() if body.enabled else None,
     )
@@ -221,7 +225,7 @@ async def patch_source(
     if body.name is not None:
         source.name = body.name
     if body.interval_hours is not None:
-        source.interval_hours = body.interval_hours
+        source.interval_hours = max(body.interval_hours, info.min_interval_hours)
     if body.config is not None:
         source.config = _validate(info.config_model, body.config, "config")
     if body.secret is not None:

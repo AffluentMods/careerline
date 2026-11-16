@@ -34,6 +34,7 @@ from careerline.security.crypto import FieldCipher
 from careerline.security.middleware import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from careerline.tracker.files import UPLOAD_PATH_PATTERN
 from careerline.tracker.files import router as tracker_files_router
+from careerline.tracker.followups import router as tracker_followups_router
 from careerline.tracker.people import router as tracker_people_router
 from careerline.tracker.routes import router as tracker_router
 from careerline.vault.imports import IMPORT_PATH
@@ -76,6 +77,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(tracker_router)
     app.include_router(tracker_people_router)
     app.include_router(tracker_files_router)
+    app.include_router(tracker_followups_router)
     app.include_router(discovery_router)
     app.include_router(ai_router)
     app.include_router(materials_router)

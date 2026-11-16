@@ -9,6 +9,7 @@ import { useTheme, type ThemeChoice } from "../lib/theme";
 import {
   BoardIcon,
   ChartIcon,
+  GuideIcon,
   ChatIcon,
   DocIcon,
   HomeIcon,
@@ -32,7 +33,7 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { to: "/", label: "Overview", icon: HomeIcon, end: true },
+  { to: "/", label: "Today", icon: HomeIcon, end: true },
   { to: "/vault", label: "Career Vault", icon: VaultIcon },
   { to: "/jobs", label: "Jobs", icon: SearchIcon },
   { to: "/tracker", label: "Tracker", icon: BoardIcon },
@@ -40,6 +41,7 @@ const NAV: NavItem[] = [
   { to: "/interview", label: "Interview prep", icon: MicIcon },
   { to: "/assistant", label: "Assistant", icon: ChatIcon },
   { to: "/insights", label: "Insights", icon: ChartIcon },
+  { to: "/guide", label: "Guide", icon: GuideIcon },
 ];
 
 const THEMES: { value: ThemeChoice; label: string; icon: ComponentType }[] = [

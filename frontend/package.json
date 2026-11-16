@@ -1,7 +1,7 @@
 {
   "name": "careerline-frontend",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.3.0",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "licenses": "node scripts/check-licenses.mjs",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "guide:screenshots": "playwright test -c playwright.guide.config.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "5.105.3",

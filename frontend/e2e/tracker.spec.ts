@@ -70,7 +70,7 @@ test("track an application from Saved to Offer and compare offers", async ({ pag
   await expect(page.getByText("Sam Example").first()).toBeVisible();
 
   // --- the reminder shows up on Overview ---------------------------------------------------
-  await nav.getByRole("link", { name: "Overview" }).click();
+  await nav.getByRole("link", { name: "Today" }).click();
   const dueSoon = page.getByRole("region", { name: "Due soon" });
   await expect(dueSoon.getByText("Follow up: Network Engineer")).toBeVisible();
   await expect(dueSoon.getByText("Follow up on referral: Sam Example")).toBeVisible();

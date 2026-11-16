@@ -58,8 +58,28 @@ export interface DocSummary {
   exported_at: string | null;
 }
 
+/** A second, independent AI pass over a draft (only fact-checked rewrites are applied). */
+export interface Review {
+  model?: string;
+  summary?: string;
+  changes?: { item_id: string; before: string; after: string; why: string }[];
+  discarded?: { item_id: string; text: string; why: string; reason: string }[];
+  missing?: { requirement: string; supported: boolean }[];
+  error?: string;
+}
+
+export interface AtsCheck {
+  format: "pdf" | "docx";
+  pages: number;
+  ok: boolean;
+  flagged: number;
+  checks: { id: string; ok: boolean; label: string; detail: string }[];
+  keywords: { total: number; covered: string[]; could_add: string[]; gaps: string[]; score: number | null } | null;
+  text: string;
+}
+
 export interface DocDetail extends DocSummary {
-  content: ResumeContent | LetterContent;
+  content: (ResumeContent | LetterContent) & { review?: Review };
   sources: Record<string, string>;
 }
 
@@ -112,6 +132,14 @@ export function useDiff(id: string, enabled: boolean) {
   });
 }
 
+export function useAtsCheck(id: string, format: "pdf" | "docx", enabled: boolean) {
+  return useQuery({
+    queryKey: ["materials", "ats", id, format],
+    queryFn: () => api<AtsCheck>(`/materials/documents/${id}/ats-check?format=${format}`),
+    enabled,
+  });
+}
+
 export function exportUrl(id: string, format: "pdf" | "docx"): string {
   return `/api/v1/materials/documents/${id}/export?format=${format}`;
 }
@@ -134,6 +162,16 @@ export function useMaterialsMutations() {
         qc.setQueryData(materialsKeys.doc(doc.id), doc);
         void qc.invalidateQueries({ queryKey: ["materials", "list"] });
         void qc.invalidateQueries({ queryKey: materialsKeys.diff(doc.id) });
+        void qc.invalidateQueries({ queryKey: ["materials", "ats", doc.id] });
+      },
+    }),
+    review: useMutation({
+      mutationFn: (id: string) => api<DocDetail>(`/materials/documents/${id}/review`, { method: "POST" }),
+      onSuccess: (doc) => {
+        qc.setQueryData(materialsKeys.doc(doc.id), doc);
+        void qc.invalidateQueries({ queryKey: ["materials", "list"] });
+        void qc.invalidateQueries({ queryKey: ["materials", "ats", doc.id] });
+        void qc.invalidateQueries({ queryKey: ["ai", "usage"] });
       },
     }),
     rename: useMutation({

@@ -64,6 +64,8 @@ FEATURE_MODEL = {
     "test": "scoring",
     "resume": "writing",
     "cover_letter": "writing",
+    "review": "writing",
+    "follow_up": "writing",
     "assistant": "chat",
     "mock_interview": "chat",
 }

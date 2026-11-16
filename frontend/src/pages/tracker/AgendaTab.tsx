@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+import { FollowUpsList } from "./FollowUps";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Button, Field, FullPageLoader, Notice, SelectField } from "../../components/ui";
@@ -73,6 +74,10 @@ export function AgendaTab() {
 
   return (
     <section className="stack" aria-label="Agenda">
+      <section className="card stack-sm" aria-label="Follow up">
+        <h2>Gone quiet</h2>
+        <FollowUpsList />
+      </section>
       <div className="row-between tab-toolbar">
         <p className="muted small">Reminders, apply-by dates, offer deadlines, and referral follow-ups for the next 60 days.</p>
         {!adding ? <Button onClick={() => setAdding(true)}>Add reminder</Button> : null}

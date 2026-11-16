@@ -4,6 +4,25 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-15
+
+### Added
+- **LinkedIn, Indeed, Glassdoor, ZipRecruiter, and Monster jobs through their alert emails.** A new "Job alert emails" source reads the job-alert emails those sites send you, over IMAP with TLS, and adds every job in them, with tracking codes removed from the links. The mailbox is opened read-only (nothing marked read, moved, or deleted), only those sites' alert senders are read, sender domains must match exactly, and the mail server is checked like any outbound request. Those sites are still never scraped.
+- **Ten more job sources, no key needed:** company boards on Workable, SmartRecruiters, Recruitee, and Personio; remote boards Remotive, Remote OK, Himalayas, and Jobicy; Arbeitnow (Germany and Europe); and Hacker News "Who is hiring?". Boards that ask to be checked only a few times a day get a minimum interval.
+- **Second-opinion review (AI).** AI-written resumes and cover letters get a second, independent pass that rewrites weak lines and lists what the job asks for that your facts support, and the real gaps. A rewrite is applied only if it passes the same fact check as the draft; ones that add unsupported numbers are discarded and listed. Run it on any document written for a job with "Get a second opinion".
+- **Applicant tracking check.** Reads the exported PDF or Word file the way screening software does: whether your name and contact details come through as text, garbled characters, section order, page count, and keyword coverage against the posting, split into covered, in your vault but not on the page, and real gaps.
+- **Follow-up drafts.** Open applications with no news for 10 days show up under "Gone quiet" (Agenda and Today) with a short, ready-to-send note to your contact. Drafts open in your own email app (CareerLine never sends email); "Mark as sent" records them; at most two per application. With AI, the note may use only claims from the materials linked to that application, and numbers that aren't in them are flagged.
+- **Today page.** The home page now shows setup steps that are actually left, your best new matches, applications to follow up on, what's due this week, and sources that are failing.
+- **Picture guide** (Guide in the sidebar): a nine-step walkthrough with screenshots of the demo account. Regenerate the screenshots with `npm run guide:screenshots`.
+- The add-source screen groups sources by kind, explains where to find each board name or key, and prefills sensible defaults.
+
+### Fixed
+- PDF exports drew bullets with a character that text extraction (and so applicant tracking systems) reads as a control character. Bullets are now an en dash, which comes through as text.
+- Resume bullets and rule-written cover letters showed achievement metrics as "[metric: 12 hours]". The metric is now worked in naturally, for example "(12 hours saved each month)".
+
+### Upgrading
+- One database migration (0011, allows the new source kinds). It runs automatically.
+
 ## [1.2.0] - 2026-11-06
 
 ### Added

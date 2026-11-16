@@ -103,3 +103,9 @@ export const DocIcon = () => (
     <path d="M14 3v4h4M10 12h5M10 16h5" />
   </Icon>
 );
+export const GuideIcon = () => (
+  <Icon>
+    <path d="M4 5.5C6.5 4.5 9.5 4.5 12 6c2.5-1.5 5.5-1.5 8-.5V19c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5z" />
+    <path d="M12 6v13.5" />
+  </Icon>
+);

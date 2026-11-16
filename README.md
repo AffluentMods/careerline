@@ -2,7 +2,7 @@
 
 A self-hosted, AI-assisted job search app. It helps you find jobs, decide which are worth it, prepare truthful application materials from your own verified facts, track every application, and prepare for interviews. Your data lives in your own database.
 
-> **Status: 1.2.0.** Sign in (with two-factor or single sign-on), build your Career Vault, pull jobs from the sources you choose, score them, write fact-checked resumes and cover letters, track applications, practice interviews, ask the assistant, and see what's working. Try it with fictional data first: `.\start.ps1 -Demo`.
+> **Status: 1.3.0.** Sign in (with two-factor or single sign-on), build your Career Vault, pull jobs from the sources you choose, score them, write fact-checked resumes and cover letters, track applications, practice interviews, ask the assistant, and see what's working. Try it with fictional data first: `.\start.ps1 -Demo`.
 
 ## Principles
 
@@ -16,13 +16,13 @@ A self-hosted, AI-assisted job search app. It helps you find jobs, decide which 
 
 **Career Vault.** Your single source of truth: profile, roles, responsibilities, achievements (with metrics), projects, certifications, education, skills, links, and STAR stories. Facts are *verified* or *drafts*; only verified facts (whose parents are verified too) are ever used. Import a PDF or Word resume into drafts and approve them on a side-by-side review screen. Contact details are encrypted.
 
-**Jobs.** Add sources (Greenhouse, Lever, Ashby boards, Adzuna, USAJOBS, JSearch, RSS/Atom feeds) and CareerLine fetches them on a schedule, respecting each site's terms and robots.txt. Duplicates across sources are merged. Hard filters (location and radius, work mode, minimum pay, shifts, clearance, keywords, companies) sort postings into Matches and Filtered, with the reason for each. Add a single job by link or by pasting its text. LinkedIn, Indeed, and similar sites are never fetched.
+**Jobs.** Add sources and CareerLine fetches them on a schedule, respecting each site's terms and robots.txt: **LinkedIn, Indeed, Glassdoor, ZipRecruiter, and Monster through the job-alert emails they send you** (read-only over IMAP; those sites are never scraped), search APIs (Adzuna, USAJOBS, JSearch/Google for Jobs, Arbeitnow), remote boards (Remotive, Remote OK, Himalayas, Jobicy), company boards (Greenhouse, Lever, Ashby, Workable, SmartRecruiters, Recruitee, Personio), Hacker News "Who is hiring?", and any RSS/Atom feed. Duplicates across sources are merged. Hard filters (location and radius, work mode, minimum pay, shifts, clearance, keywords, companies) sort postings into Matches and Filtered, with the reason for each. Add a single job by link or by pasting its text.
 
 **Fit scores.** Each posting gets a 0–100 score with matched requirements, gaps, and red flags (scam patterns, injected instructions). Keyword scoring works with no AI at all; AI scoring uses Claude, any OpenAI-compatible API, or a local Ollama. Scores go stale and are redone when your vault changes. The Settings → AI page shows calls, tokens, and estimated cost, with a monthly budget.
 
-**Materials.** Tailored resumes and cover letters per job, built only from verified facts. Every line cites its facts, numbers must appear in those facts, and anything unsupported is flagged until you edit, approve, or remove it. Compare with your master resume, then export to PDF or Word (simple single-column layouts that applicant tracking systems read well) or attach the file to the application.
+**Materials.** Tailored resumes and cover letters per job, built only from verified facts. Every line cites its facts, numbers must appear in those facts, and anything unsupported is flagged until you edit, approve, or remove it. With AI, a second reviewer pass tightens weak lines (only with rewrites that still pass the fact check) and lists what the job asks for that you can honestly add. An applicant-tracking check reads the exported file the way screening software does: contact details, garbled text, section order, and keyword coverage, split into what you could add and real gaps. Compare with your master resume, then export to PDF or Word or attach the file to the application.
 
-**Tracker.** Board and list views from Saved to Offer, a timeline per application (stage changes recorded automatically), encrypted attachments, contacts and referrals, reminders and an agenda, and side-by-side offer comparison.
+**Tracker.** Board and list views from Saved to Offer, a timeline per application (stage changes recorded automatically), encrypted attachments, contacts and referrals, reminders and an agenda, side-by-side offer comparison, and follow-up drafts for applications that have gone quiet for 10 days (opened in your own email app; never sent by CareerLine, at most two per application).
 
 **Interview prep.** Likely questions for a job (behavioral, technical, situational, company), each matched to your STAR stories, with your notes. With an AI provider, practice interviews ask one question at a time and give feedback on each answer.
 

@@ -29,7 +29,26 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from careerline.db import Base, Timestamps, UUIDPk
 
-SOURCE_KINDS = ("greenhouse", "lever", "ashby", "adzuna", "usajobs", "jsearch", "rss")
+SOURCE_KINDS = (
+    "greenhouse",
+    "lever",
+    "ashby",
+    "workable",
+    "smartrecruiters",
+    "recruitee",
+    "personio",
+    "adzuna",
+    "usajobs",
+    "jsearch",
+    "rss",
+    "remotive",
+    "remoteok",
+    "himalayas",
+    "jobicy",
+    "arbeitnow",
+    "hn_hiring",
+    "email_alerts",
+)
 POSTING_STATUSES = ("new", "saved", "dismissed", "tracked")
 JOB_STATUSES = ("queued", "running", "done", "failed")
 
